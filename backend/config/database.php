@@ -1,0 +1,19 @@
+<?php
+// backend/config/database.php
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json; charset=UTF-8");
+
+$host = "localhost";
+$db_name = "meeting_assistant";
+$username = "root";
+$password = "";
+
+try {
+    $conn = new PDO("mysql:host=" . $host . ";dbname=" . $db_name, $username, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch(PDOException $exception) {
+    http_response_code(500);
+    echo json_encode(["message" => "Database connection failed. Please ensure MySQL is running (e.g., via XAMPP) and the database is created. Details: " . $exception->getMessage()]);
+    exit();
+}
+?>

@@ -1,0 +1,18 @@
+Project Launch Sync
+Date: August 11, 2026
+
+Participants:
+- Amit Shah (Product Manager)
+- Priya Patel (Lead Developer)
+- Rahul Sharma (Marketing)
+
+Transcript:
+Amit: Hi everyone, let's get started. The main goal today is to finalize the launch strategy for the new MeetAI product. Can we confirm the target launch date?
+Priya: The engineering team needs about 3 more weeks to stabilize the AI API integration. If we aim for September 15th, we should be good.
+Amit: September 15th sounds perfect. Decision made. 
+Rahul: From marketing, we need the final API documentation so we can brief the PR agencies. Priya, when can you get that to me?
+Priya: I will have the API docs updated and sent to you by August 18th.
+Rahul: Great. Also, Amit, I need you to finalize the marketing budget by next week so I can start buying ad space.
+Amit: I will finalize the marketing campaign budget by August 20th. I'll flag it as high priority.
+Priya: Awesome. I'll create a repository structure for the new dashboard modules today as well.
+Amit: Perfect. Thanks everyone, let's stick to these deadlines.

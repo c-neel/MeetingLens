@@ -1,0 +1,6 @@
+node_modules/
+.DS_Store
+.env
+my-react-app/node_modules/
+my-react-app/dist/
+backend/node_modules/
