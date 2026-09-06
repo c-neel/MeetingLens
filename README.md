@@ -1,4 +1,10 @@
-# AI MOM & Task Generation System
+# 🎙️ Voice Assistant (AI MOM & Task Generation System)
+
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![React](https://img.shields.io/badge/frontend-React.js-61DAFB.svg?logo=react)
+![PHP](https://img.shields.io/badge/backend-PHP-777BB4.svg?logo=php)
+![MySQL](https://img.shields.io/badge/database-MySQL-4479A1.svg?logo=mysql)
+![Gemini AI](https://img.shields.io/badge/AI-Google_Gemini-FFCA28.svg?logo=google)
 
 An intelligent web application that streamlines meeting management by using AI to generate Minutes of Meeting (MOM), extract action items, calculate confidence scores for tasks, and automatically delegate tasks via email with calendar integration.
 
@@ -13,7 +19,7 @@ An intelligent web application that streamlines meeting management by using AI t
 
 ## 📂 Project Structure
 
-```
+```text
 ├── backend/                  # PHP Backend API
 │   ├── api/                  # API endpoints (meetings, tasks, email, etc.)
 │   ├── config/               # Database configuration and connection setup
@@ -69,9 +75,9 @@ An intelligent web application that streamlines meeting management by using AI t
 
 3. **Backend Setup:**
    - Ensure you have a PHP server (like XAMPP, WAMP, or MAMP) running.
-   - Import `voice_assistant.sql` into your MySQL database.
-   - Update `backend/config/database.php` with your database credentials.
-   - Set up your Gemini API key in the appropriate frontend `.env` or configuration file.
+   - Import `database/voice_assistant.sql` into your MySQL database.
+   - Update `backend/config/database.php` (or relevant config files) with your database credentials.
+   - Set up your Gemini API key in `backend/config/ai_config.php` and the frontend environment if necessary.
 
 ## 📝 Usage Workflow
 
@@ -81,3 +87,9 @@ An intelligent web application that streamlines meeting management by using AI t
 4. In the **Finalize Task Assignment** screen, assign a team member, deadline, and priority.
 5. Click **Approve & Send Notification**. The assignee receives an email with a Google Calendar link and the MOM PDF.
 6. Track progress in the **Tasks** dashboard.
+
+## 🤝 Contributing
+Contributions, issues, and feature requests are welcome!
+
+---
+*Built with ❤️ for better meeting management and task delegation.*
