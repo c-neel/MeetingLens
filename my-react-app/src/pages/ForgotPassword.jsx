@@ -186,8 +186,9 @@ export default function ForgotPassword() {
 
           {/* Brand Header */}
           <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-            <img src="/logo.png" alt="MeetingLens Logo" style={{ height: '44px', margin: '0 auto 0.25rem auto', display: 'block', objectFit: 'contain' }} />
-            <span style={{ fontWeight: 700, fontSize: '1.25rem', letterSpacing: '-0.02em', background: 'linear-gradient(135deg, #1e3a8a, #3b82f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>MeetingLens</span>
+            <Link to="/" title="Go to Landing Page">
+              <img src="/logo.png" alt="MeetingLens Logo" style={{ height: '52px', margin: '0 auto', display: 'block', objectFit: 'contain', cursor: 'pointer' }} />
+            </Link>
           </div>
 
           {/* STEP 1: REQUEST OTP */}

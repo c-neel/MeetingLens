@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Info, UserPlus } from 'lucide-react';
 
 export default function Auth() {
@@ -228,8 +228,9 @@ export default function Auth() {
             flexDirection: 'column'
           }}>
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-              <img src="/logo.png" alt="MeetingLens Logo" style={{ height: '48px', margin: '0 auto 0.75rem auto', display: 'block', objectFit: 'contain' }} />
-              <h1 style={{ fontFamily: 'Manrope, sans-serif', fontSize: '24px', fontWeight: 700, color: '#0b1c30', margin: '0 0 0.25rem 0' }}>MeetingLens</h1>
+              <Link to="/" title="Go to Landing Page" style={{ display: 'inline-block' }}>
+                <img src="/logo.png" alt="MeetingLens Logo" style={{ height: '56px', margin: '0 auto 0.5rem auto', display: 'block', objectFit: 'contain', cursor: 'pointer' }} />
+              </Link>
               <p style={{ fontSize: '15px', color: '#424754', margin: 0 }}>Create your MeetingLens account</p>
             </div>
 
@@ -346,7 +347,9 @@ export default function Auth() {
 
             {/* Header */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'center', alignItems: 'center' }}>
-              <img src="/logo.png" alt="MeetingLens Logo" style={{ height: '52px', objectFit: 'contain', marginBottom: '0.25rem' }} />
+              <Link to="/" title="Go to Landing Page">
+                <img src="/logo.png" alt="MeetingLens Logo" style={{ height: '56px', objectFit: 'contain', marginBottom: '0.25rem', cursor: 'pointer' }} />
+              </Link>
               <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
                 Welcome to MeetingLens
               </h1>

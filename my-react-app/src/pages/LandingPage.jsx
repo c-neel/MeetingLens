@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Zap, Upload, Mic, CheckSquare, BarChart3, FileText, Shield, ArrowRight } from 'lucide-react';
 
 export default function LandingPage() {
@@ -8,10 +8,9 @@ export default function LandingPage() {
   return (
     <div className="landing-page">
       <nav className="landing-nav">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <img src="/logo.png" alt="MeetingLens Logo" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
-          <span style={{ fontWeight: 700, fontSize: '1.35rem', letterSpacing: '-0.02em', background: 'linear-gradient(135deg, #1e3a8a, #3b82f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>MeetingLens</span>
-        </div>
+        <Link to="/" style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <img src="/logo.png" alt="MeetingLens Logo" style={{ height: '52px', width: 'auto', objectFit: 'contain', cursor: 'pointer' }} />
+        </Link>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button className="btn btn-outline" onClick={() => navigate('/login')}>Log In</button>
           <button className="btn btn-primary" onClick={() => navigate('/login')}>Get Started</button>
