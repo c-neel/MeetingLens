@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-include_once '../config/ai_config.php';
+include_once __DIR__ . '/../config/ai_config.php';
 
 $keyDiagnostic = getKeyDiagnostic();
 $keyConfigured = isGeminiKeyConfigured();
@@ -44,7 +44,7 @@ $requestBody = json_encode([
     ],
     "generationConfig" => [
         "temperature" => 0.0,
-        "maxOutputTokens" => 50
+        "maxOutputTokens" => 1024
     ]
 ]);
 
@@ -109,7 +109,14 @@ if ($httpCode !== 200) {
 
 // Parse response
 $geminiResponse = json_decode($response, true);
-$aiText = $geminiResponse['candidates'][0]['content']['parts'][0]['text'] ?? '';
+$aiText = '';
+if (!empty($geminiResponse['candidates'][0]['content']['parts'])) {
+    foreach ($geminiResponse['candidates'][0]['content']['parts'] as $part) {
+        if (!empty($part['text'])) {
+            $aiText .= $part['text'];
+        }
+    }
+}
 $aiText = trim($aiText);
 
 $isOk = ($httpCode === 200 && !empty($aiText));

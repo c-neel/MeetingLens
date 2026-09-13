@@ -1,20 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { getActionItems, updateActionItem } from '../services/api';
-import { List, Columns, Calendar, AlertCircle, Search, User, Send } from 'lucide-react';
+import { Calendar, AlertCircle, Search, User, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Tasks() {
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState('All');
-  const [view, setView] = useState('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('All');
   const [activeTab, setActiveTab] = useState('for_me'); // 'for_me' or 'delegated'
   const [isSyncing, setIsSyncing] = useState(false);
+  const [priorityOverrides, setPriorityOverrides] = useState({}); // { [taskId]: 'High'|'Medium'|'Low' }
   const navigate = useNavigate();
 
   const handleApproveTask = (task) => {
-    navigate(`/tasks/approve/${task.id}`);
+    navigate(`/tasks/approve/${task.id}`, {
+      state: {
+        from: 'tasks',
+        returnUrl: '/tasks'
+      }
+    });
   };
 
   const handleTaskApproved = (updatedTask) => {
@@ -49,10 +54,46 @@ export default function Tasks() {
 
   const filters = ['All', 'Pending', 'In Progress', 'Completed', 'Overdue'];
 
+  const formatTaskDueDate = (item) => {
+    const due = item?.dueDate || item?.due_date;
+    if (!due || due === 'null' || due === '-' || due === 'No Deadline') return 'No Deadline';
+    return due;
+  };
+
+  // Auto-compute priority from due date: <=2 days = High, <=7 days = Medium, else Low
+  const computePriorityFromDueDate = (item) => {
+    const due = item.dueDate || item.due_date;
+    if (!due || due === 'null' || due === '-' || due === 'No Deadline') return item.priority || 'Medium';
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const dueDate = new Date(due);
+    dueDate.setHours(0, 0, 0, 0);
+    if (isNaN(dueDate.getTime())) return item.priority || 'Medium';
+    const diffDays = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 2) return 'High';    // Due within 2 days or overdue
+    if (diffDays <= 7) return 'Medium';  // Due within a week
+    return 'Low';                        // Due later than a week
+  };
+
+  // Get effective priority: manual override > auto-computed from due date
+  const getEffectivePriority = (item) => {
+    if (priorityOverrides[item.id]) return priorityOverrides[item.id];
+    return computePriorityFromDueDate(item);
+  };
+
+  // Priority sort weight (Higher priority = higher weight = appears first)
+  const priorityWeight = (p) => {
+    if (p === 'High') return 3;
+    if (p === 'Medium') return 2;
+    return 1;
+  };
+
   const isOverdue = (item) => {
     const due = item.dueDate || item.due_date;
-    if (!due || item.status === 'Completed') return false;
-    return new Date(due) < new Date();
+    if (!due || due === 'null' || due === '-' || due === 'No Deadline' || item.status === 'Completed') return false;
+    const d = new Date(due);
+    if (isNaN(d.getTime())) return false;
+    return d < new Date();
   };
 
   const isMyTask = (item) => {
@@ -63,8 +104,20 @@ export default function Tasks() {
     return assignee.includes(full) || assignee.includes(first) || full.includes(assignee);
   };
 
-  // Get unique list of assignees for dropdown filter
-  const uniqueAssignees = Array.from(new Set(items.map(i => i.assignee).filter(Boolean)));
+  const getDisplayAssignee = (item) => {
+    if (!item || !item.assignee) return '-';
+    const a = String(item.assignee).trim();
+    if (!a || a === '-' || a.toLowerCase() === 'unassigned' || a.toLowerCase() === 'none' || a.toLowerCase() === 'not specified') {
+      return '-';
+    }
+    if (isMyTask(item)) return currentUserName;
+    return a;
+  };
+
+  // Get unique list of assignees for dropdown filter (normalized to avoid duplicates like 'Amit' & 'Amit Shah')
+  const uniqueAssignees = Array.from(
+    new Set(items.map(i => (isMyTask(i) ? currentUserName : i.assignee)).filter(Boolean))
+  );
 
   const filtered = items.filter(item => {
     // 1. Tab filter
@@ -79,7 +132,10 @@ export default function Tasks() {
     // 2. Specific assignee filter dropdown
     if (assigneeFilter !== 'All') {
       if (assigneeFilter === 'My Tasks' && !isMyTask(item)) return false;
-      if (assigneeFilter !== 'My Tasks' && item.assignee !== assigneeFilter) return false;
+      if (assigneeFilter !== 'My Tasks') {
+        const displayed = getDisplayAssignee(item);
+        if (displayed !== assigneeFilter && item.assignee !== assigneeFilter) return false;
+      }
     }
 
     // 3. Search term filter
@@ -106,6 +162,22 @@ export default function Tasks() {
     // Persist to backend database
     updateActionItem(id, { status: newStatus });
   };
+
+  const updatePriority = (id, newPriority) => {
+    // Store as a manual override
+    setPriorityOverrides(prev => ({ ...prev, [id]: newPriority }));
+    // Optimistic UI update
+    setItems(prev => prev.map(item =>
+      item.id === id ? { ...item, priority: newPriority } : item
+    ));
+    // Persist to backend database
+    updateActionItem(id, { status: items.find(i => i.id === id)?.status || 'Pending', priority: newPriority });
+  };
+
+  // Sort filtered items by priority descending (High → Medium → Low)
+  const sortedFiltered = [...filtered].sort((a, b) => {
+    return priorityWeight(getEffectivePriority(b)) - priorityWeight(getEffectivePriority(a));
+  });
 
   return (
     <div className="animate-fadeIn">
@@ -138,14 +210,6 @@ export default function Tasks() {
             >
               <Send className="w-4 h-4" /> Delegated By Me
             </button>
-          </div>
-          
-          <button className={`btn ${view === 'list' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setView('list')}>
-            <List className="w-4 h-4" /> List
-          </button>
-          <button className={`btn ${view === 'kanban' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setView('kanban')}>
-            <Columns className="w-4 h-4" /> Kanban
-          </button>
         </div>
       </div>
 
@@ -153,34 +217,17 @@ export default function Tasks() {
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
         {activeTab === 'for_me' && (
           <div className="filter-bar" style={{ marginBottom: 0 }}>
-            {filters.map(f => (
-              <button key={f} className={`filter-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
-                {f} {f !== 'All' && <span style={{ marginLeft: '0.25rem', opacity: 0.8 }}>({items.filter(i => (f === 'Overdue' ? isOverdue(i) : i.status === f)).length})</span>}
-              </button>
-            ))}
+            {filters.map(f => {
+              const myTasks = items.filter(isMyTask);
+              const count = f === 'All' ? myTasks.length : myTasks.filter(i => (f === 'Overdue' ? isOverdue(i) : i.status === f)).length;
+              return (
+                <button key={f} className={`filter-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
+                  {f} {f !== 'All' && <span style={{ marginLeft: '0.25rem', opacity: 0.8 }}>({count})</span>}
+                </button>
+              );
+            })}
           </div>
         )}
-
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          {/* Assignee Filter Dropdown */}
-          <select
-            value={assigneeFilter}
-            onChange={e => setAssigneeFilter(e.target.value)}
-            style={{
-              padding: '0.5rem 0.75rem',
-              borderRadius: '6px',
-              border: '1px solid var(--border)',
-              fontSize: '0.875rem',
-              background: 'white',
-              cursor: 'pointer'
-            }}
-          >
-            <option value="All">All Assignees</option>
-            <option value="My Tasks">👤 My Tasks ({currentUserName})</option>
-            {uniqueAssignees.map(name => (
-              <option key={name} value={name}>{name}</option>
-            ))}
-          </select>
 
           {/* Search Box */}
           <div style={{ position: 'relative', width: '220px', maxWidth: '100%' }}>
@@ -206,7 +253,7 @@ export default function Tasks() {
         </div>
       </div>
 
-      {view === 'list' && (
+      
         <div className="card">
           {filtered.length === 0 ? (
             <div className="empty-state">
@@ -231,13 +278,16 @@ export default function Tasks() {
                     <th>Due Date</th>
                     {activeTab === 'for_me' && <th>Priority</th>}
                     {activeTab === 'for_me' && <th>Status</th>}
-                    {activeTab === 'for_me' && <th>Confidence</th>}
+
                     {activeTab === 'for_me' && <th>Source</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(item => {
+                  {sortedFiltered.map(item => {
                     const myTask = isMyTask(item);
+                    const effectivePriority = getEffectivePriority(item);
+                    const priorityColors = { High: { border: '#ef4444', bg: '#fef2f2', color: '#dc2626' }, Medium: { border: '#f59e0b', bg: '#fffbeb', color: '#d97706' }, Low: { border: '#6b7280', bg: '#f9fafb', color: '#6b7280' } };
+                    const pc = priorityColors[effectivePriority] || priorityColors.Medium;
                     return (
                       <tr key={item.id} style={{ background: myTask ? 'rgba(56, 189, 248, 0.04)' : 'transparent' }}>
                         <td style={{ fontWeight: 500 }}>
@@ -248,13 +298,36 @@ export default function Tasks() {
                             </span>
                           )}
                         </td>
-                        <td>{item.assignee}</td>
-                        <td style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          {isOverdue(item) && <AlertCircle className="w-3 h-3" style={{ color: 'var(--danger)' }} />}
-                          <span style={{ color: isOverdue(item) ? 'var(--danger)' : 'inherit' }}>{item.dueDate || item.due_date}</span>
+                        <td>{getDisplayAssignee(item)}</td>
+                        <td style={{ whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', whiteSpace: 'nowrap' }}>
+                            {isOverdue(item) && <AlertCircle className="w-3.5 h-3.5 shrink-0" style={{ color: '#dc2626' }} title="Overdue Task" />}
+                            <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: '#334155' }}>
+                              {formatTaskDueDate(item)}
+                            </span>
+                          </div>
                         </td>
                         {activeTab === 'for_me' && (
-                          <td><span className={`badge badge-${item.priority === 'High' ? 'danger' : item.priority === 'Medium' ? 'warning' : 'neutral'}`}>{item.priority}</span></td>
+                          <td>
+                            <select
+                              value={effectivePriority}
+                              onChange={e => updatePriority(item.id, e.target.value)}
+                              style={{
+                                border: `1.5px solid ${pc.border}`,
+                                borderRadius: '4px',
+                                padding: '0.25rem 0.5rem',
+                                fontSize: '0.75rem',
+                                background: pc.bg,
+                                fontWeight: 600,
+                                color: pc.color,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <option value="High">High</option>
+                              <option value="Medium">Medium</option>
+                              <option value="Low">Low</option>
+                            </select>
+                          </td>
                         )}
                         {activeTab === 'for_me' && (
                           <td>
@@ -288,14 +361,7 @@ export default function Tasks() {
                             )}
                           </td>
                         )}
-                        {activeTab === 'for_me' && (
-                          <td>
-                            <div className="confidence-bar">
-                              <div className="confidence-track"><div className="confidence-fill" style={{ width: `${item.confidence || 90}%` }}></div></div>
-                              {item.confidence || 90}%
-                            </div>
-                          </td>
-                        )}
+
                         {activeTab === 'for_me' && (
                           <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.meeting_title || 'Meeting'}</td>
                         )}
@@ -307,70 +373,6 @@ export default function Tasks() {
             </div>
           )}
         </div>
-      )}
-
-      {view === 'kanban' && (
-        <div className="kanban-board">
-          {['Pending', 'In Progress', 'Completed', 'Overdue'].map(col => {
-            const colItems = filtered.filter(item => {
-              if (col === 'Overdue') return isOverdue(item);
-              if (col === 'Pending') return item.status === 'Pending' && !isOverdue(item);
-              return item.status === col;
-            });
-            return (
-              <div className="kanban-column" key={col}>
-                <div className="kanban-column-header">
-                  <span>{col}</span>
-                  <span className="kanban-count">{colItems.length}</span>
-                </div>
-                {colItems.map(item => {
-                  const myTask = isMyTask(item);
-                  return (
-                    <div className="kanban-card" key={item.id} style={{ borderLeft: myTask ? '3px solid var(--primary)' : 'none' }}>
-                      <div style={{ fontWeight: 500, fontSize: '0.875rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span>{item.task}</span>
-                        {myTask && <span className="badge badge-primary" style={{ fontSize: '0.625rem' }}>You</span>}
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        <span>{item.assignee}</span>
-                        <span className={`badge badge-${item.priority === 'High' ? 'danger' : 'warning'}`}>{item.priority}</span>
-                      </div>
-                      
-                      <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ fontSize: '0.6875rem', color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          <Calendar className="w-3 h-3" /> {item.dueDate || item.due_date}
-                        </div>
-                        {myTask && (
-                          <select
-                            value={item.status}
-                            onChange={e => updateStatus(item.id, e.target.value)}
-                            style={{
-                              fontSize: '0.6875rem',
-                              padding: '0.125rem 0.375rem',
-                              borderRadius: '4px',
-                              border: '1px solid var(--primary)',
-                              background: '#f0f9ff',
-                              color: '#0369a1',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <option value="Pending">Pending</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Completed">Completed</option>
-                          </select>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-                {colItems.length === 0 && (
-                  <div style={{ textAlign: 'center', padding: '1.5rem', fontSize: '0.8125rem', color: 'var(--text-light)' }}>No tasks</div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

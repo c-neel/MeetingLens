@@ -390,7 +390,6 @@ export default function OnlineMeeting() {
                     <th>Task</th>
                     <th>Assignee</th>
                     <th>Due Date</th>
-                    <th>Priority</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -398,8 +397,7 @@ export default function OnlineMeeting() {
                     <tr key={i}>
                       <td style={{ fontWeight: 500 }}>{item.task}</td>
                       <td>{item.assignee}</td>
-                      <td>{item.dueDate || item.due_date}</td>
-                      <td><span className={`badge badge-${item.priority === 'High' ? 'danger' : 'warning'}`}>{item.priority}</span></td>
+                      <td>{(item.dueDate && item.dueDate !== 'No Deadline' && item.dueDate !== 'null' && item.dueDate !== '-') ? item.dueDate : (item.due_date && item.due_date !== 'No Deadline' && item.due_date !== 'null' && item.due_date !== '-') ? item.due_date : 'No Deadline'}</td>
                     </tr>
                   ))}
                 </tbody>

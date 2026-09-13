@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-include_once '../../config/database.php';
+include_once __DIR__ . '/../../config/database.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -32,7 +32,15 @@ switch ($method) {
                 // Get Action Items
                 $stmt = $conn->prepare("SELECT * FROM action_items WHERE meeting_id = ?");
                 $stmt->execute([$id]);
-                $meeting['actionItems'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($items as &$it) {
+                    $it['dueDate'] = $it['due_date'];
+                    $a = trim((string)($it['assignee'] ?? ''));
+                    if ($a === '' || in_array(strtolower($a), ['unassigned', 'none', 'not specified', '-'])) {
+                        $it['assignee'] = '-';
+                    }
+                }
+                $meeting['actionItems'] = $items;
                 
                 // Get Documents
                 $stmt = $conn->prepare("SELECT * FROM documents WHERE meeting_id = ?");
@@ -107,10 +115,12 @@ switch ($method) {
                 if (!empty($data->actionItems)) {
                     $stmt = $conn->prepare("INSERT INTO action_items (meeting_id, task, assignee, due_date, priority, status) VALUES (?, ?, ?, ?, ?, ?)");
                     foreach ($data->actionItems as $item) {
-                        $dueDate = !empty($item->dueDate) ? $item->dueDate : null;
+                        $dueDate = !empty($item->dueDate) ? $item->dueDate : (!empty($item->due_date) ? $item->due_date : null);
                         $priority = !empty($item->priority) ? $item->priority : 'Medium';
                         $status = !empty($item->status) ? $item->status : 'Pending';
-                        $stmt->execute([$meeting_id, $item->task, $item->assignee, $dueDate, $priority, $status]);
+                        $rawAssignee = !empty($item->assignee) ? trim((string)$item->assignee) : '';
+                        $assignee = ($rawAssignee === '' || in_array(strtolower($rawAssignee), ['unassigned', 'none', 'not specified', '-'])) ? '-' : $rawAssignee;
+                        $stmt->execute([$meeting_id, $item->task, $assignee, $dueDate, $priority, $status]);
                     }
                 }
 
@@ -136,6 +146,59 @@ switch ($method) {
         } else {
             http_response_code(400);
             echo json_encode(["message" => "Incomplete data."]);
+        }
+        break;
+
+    case 'DELETE':
+        if (isset($_GET['all']) && $_GET['all'] === 'true') {
+            try {
+                // Disable foreign key checks to safely truncate all dependent tables
+                $conn->exec("SET FOREIGN_KEY_CHECKS = 0");
+                $tablesToClear = [
+                    'reminders',
+                    'ai_remarks',
+                    'follow_ups',
+                    'suggestions',
+                    'risks',
+                    'email_notifications',
+                    'documents',
+                    'action_items',
+                    'decisions',
+                    'meetings'
+                ];
+                foreach ($tablesToClear as $t) {
+                    try {
+                        $conn->exec("TRUNCATE TABLE `$t`");
+                    } catch (Exception $e) {
+                        $conn->exec("DELETE FROM `$t`");
+                        $conn->exec("ALTER TABLE `$t` AUTO_INCREMENT = 1");
+                    }
+                }
+                $conn->exec("SET FOREIGN_KEY_CHECKS = 1");
+
+                http_response_code(200);
+                echo json_encode([
+                    "success" => true,
+                    "message" => "All meetings and associated tasks, summaries, and decisions have been cleared."
+                ]);
+            } catch (Exception $e) {
+                http_response_code(500);
+                echo json_encode(["success" => false, "message" => "Failed to clear meetings: " . $e->getMessage()]);
+            }
+        } elseif (isset($_GET['id'])) {
+            $id = intval($_GET['id']);
+            try {
+                $stmt = $conn->prepare("DELETE FROM meetings WHERE id = ?");
+                $stmt->execute([$id]);
+                http_response_code(200);
+                echo json_encode(["success" => true, "message" => "Meeting deleted successfully."]);
+            } catch (Exception $e) {
+                http_response_code(500);
+                echo json_encode(["success" => false, "message" => "Failed to delete meeting: " . $e->getMessage()]);
+            }
+        } else {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "Meeting ID or all=true parameter is required."]);
         }
         break;
 

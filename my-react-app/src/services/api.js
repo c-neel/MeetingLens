@@ -101,6 +101,49 @@ export const saveMeeting = async (meetingData) => {
   }
 };
 
+export const deleteMeeting = async (id) => {
+  try {
+    const response = await fetch(`${BASE_URL}/meetings/index.php?id=${id}`, {
+      method: 'DELETE'
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Delete meeting error:", error);
+    throw error;
+  }
+};
+
+export const clearAllMeetings = async () => {
+  try {
+    const response = await fetch(`${BASE_URL}/meetings/index.php?all=true`, {
+      method: 'DELETE'
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Clear all meetings error:", error);
+    throw error;
+  }
+};
+
+// ==================== USER PROFILE & SETTINGS ====================
+export const updateUserProfile = async (payload) => {
+  try {
+    const response = await fetch(`${BASE_URL}/users/update_profile.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to update profile');
+    }
+    return data;
+  } catch (error) {
+    console.error("Update profile error:", error);
+    throw error;
+  }
+};
+
 // ==================== ACTION ITEMS ====================
 export const getActionItems = async () => {
   const user = getLoggedInUser();
@@ -172,6 +215,47 @@ export const deleteDocument = async (id) => {
   }
 };
 
+// ==================== REPORTS & EXPORT ====================
+export const getReportData = async (startDate, endDate, preset = 'quarter') => {
+  const user = getLoggedInUser();
+  try {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    if (preset) params.append('preset', preset);
+    if (user && user.id) params.append('user_id', user.id);
+    if (user && user.name) params.append('user_name', user.name);
+    const response = await fetch(`${BASE_URL}/reports/generate.php?${params.toString()}`);
+    if (!response.ok) throw new Error('Failed to generate report');
+    return await response.json();
+  } catch (error) {
+    console.error("Report fetch error:", error);
+    throw error;
+  }
+};
+
+export const getReportPdfUrl = (startDate, endDate, preset = 'quarter') => {
+  const user = getLoggedInUser();
+  const params = new URLSearchParams();
+  if (startDate) params.append('start_date', startDate);
+  if (endDate) params.append('end_date', endDate);
+  if (preset) params.append('preset', preset);
+  if (user && user.id) params.append('user_id', user.id);
+  if (user && user.name) params.append('user_name', user.name);
+  return `${BASE_URL}/reports/export_pdf.php?${params.toString()}`;
+};
+
+export const getReportCsvUrl = (startDate, endDate, preset = 'quarter') => {
+  const user = getLoggedInUser();
+  const params = new URLSearchParams();
+  if (startDate) params.append('start_date', startDate);
+  if (endDate) params.append('end_date', endDate);
+  if (preset) params.append('preset', preset);
+  if (user && user.id) params.append('user_id', user.id);
+  if (user && user.name) params.append('user_name', user.name);
+  return `${BASE_URL}/reports/export_csv.php?${params.toString()}`;
+};
+
 // ==================== AI PROCESSING ====================
 // This function NEVER silently falls back to mock data.
 // It either returns real AI results or throws an error object.
@@ -206,18 +290,34 @@ export const processTranscript = async (transcriptText, meetingTitle) => {
 
   console.log('[AI Pipeline] Backend response HTTP status:', response.status);
 
-  // Parse the response body
-  let result;
+  // Parse the response body safely
+  const rawText = await response.text();
+  let result = null;
+
   try {
-    result = await response.json();
+    const cleanText = rawText.trim().replace(/^\uFEFF/, '');
+    result = JSON.parse(cleanText);
   } catch (parseError) {
-    console.error('[AI Pipeline] Could not parse backend response as JSON');
-    throw {
-      error_type: 'INVALID_BACKEND_RESPONSE',
-      message: 'Backend returned a non-JSON response. Check the PHP error log.',
-      http_code: response.status,
-      details: parseError.message
-    };
+    // Attempt extracting JSON substring if PHP or proxy prepended any output
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        result = JSON.parse(jsonMatch[0]);
+      } catch (innerError) {
+        // Fallback to error below
+      }
+    }
+
+    if (!result) {
+      console.error('[AI Pipeline] Could not parse backend response as JSON. Raw response:', rawText);
+      const snippet = rawText.length > 200 ? rawText.substring(0, 200) + '...' : rawText;
+      throw {
+        error_type: 'INVALID_BACKEND_RESPONSE',
+        message: snippet ? `Backend response was not valid JSON: ${snippet}` : 'Backend returned an empty response. Check server logs.',
+        http_code: response.status,
+        details: parseError.message
+      };
+    }
   }
 
   // If the backend returned an error (non-200 status or error fields)
@@ -241,10 +341,10 @@ export const processTranscript = async (transcriptText, meetingTitle) => {
   console.log('[AI Pipeline] Decisions count:', result.decisions?.length);
   console.log('[AI Pipeline] Action items count:', result.action_items?.length);
 
-  // Map action_items from backend format to frontend format
+  // Map action_items from backend format to frontend format (default to '-' unassigned)
   const actionItems = (result.action_items || []).map(item => ({
     task: item.task || 'Untitled task',
-    assignee: item.assignee || 'Unassigned',
+    assignee: '-',
     dueDate: item.due_date || item.dueDate || null,
     priority: item.priority || 'Not specified',
     status: item.status || 'Pending',

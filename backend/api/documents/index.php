@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-include_once '../../config/database.php';
+include_once __DIR__ . '/../../config/database.php';
 
 // Safely ensure category and file_data columns exist in documents table
 try {

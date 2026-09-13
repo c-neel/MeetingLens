@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-include_once '../../config/ai_config.php';
+include_once __DIR__ . '/../../config/ai_config.php';
 
 $data = json_decode(file_get_contents("php://input"));
 
@@ -106,4 +106,3 @@ Instructions:
     http_response_code(400);
     echo json_encode(array("success" => false, "message" => "User prompt is required."));
 }
-?>

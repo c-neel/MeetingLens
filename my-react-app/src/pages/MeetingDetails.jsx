@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { getMeetingById, getDocuments, uploadDocument, deleteDocument } from '../services/api';
 import { ArrowLeft, Save, FileDown, Mail, Edit2, ShieldAlert, Sparkles, CheckCircle2, Clock, Calendar, FileText, AlertTriangle, ChevronDown, Paperclip, Plus, Download, Trash2, Upload, X, AlertCircle, CheckCircle, Send } from 'lucide-react';
 import { exportAsPDF, exportAsWord, downloadDocumentFile } from '../utils/exporter';
@@ -13,11 +13,26 @@ const FORMAT_CONFIG = {
   PNG: { label: 'Image (.png, .jpg)', accept: '.png,.jpg,.jpeg', exts: ['png', 'jpg', 'jpeg'] }
 };
 
+const TABS = ['Overview', 'Transcript', 'MOM', 'Tasks', 'Decisions', 'AI Assistant'];
+
+export const formatAssignee = (assignee) => {
+  if (!assignee) return '-';
+  const a = String(assignee).trim();
+  if (!a || a === '-' || a.toLowerCase() === 'unassigned' || a.toLowerCase() === 'none' || a.toLowerCase() === 'not specified') {
+    return '-';
+  }
+  return a;
+};
+
 export default function MeetingDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
   const [meeting, setMeeting] = useState(null);
-  const [activeTab, setActiveTab] = useState('Overview');
+  const initialTab = searchParams.get('tab') || location.state?.tab || 'Overview';
+  const [activeTab, setActiveTab] = useState(TABS.includes(initialTab) ? initialTab : 'Overview');
   const [isEditingSummary, setIsEditingSummary] = useState(false);
   const [summary, setSummary] = useState('');
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -47,13 +62,37 @@ export default function MeetingDetails() {
     loadAttachments();
   }, [id]);
 
-  if (!meeting) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading meeting details...</div>;
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') || location.state?.tab;
+    if (tabParam && TABS.includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams, location.state]);
 
-  const tabs = ['Overview', 'Transcript', 'MOM', 'Tasks', 'Decisions', 'AI Assistant', 'References'];
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      setTimeout(() => {
+        const el = document.getElementById(hash.replace('#', ''));
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+    }
+  }, [activeTab, location.hash]);
+
+  const tabs = TABS;
 
   const handleApproveTask = (task) => {
-    navigate(`/tasks/approve/${task.id}`);
+    navigate(`/tasks/approve/${task.id}`, {
+      state: {
+        from: 'meeting',
+        meetingId: id,
+        returnUrl: `/meetings/${id}?tab=Tasks#tasks-section`,
+        scrollTo: 'tasks'
+      }
+    });
   };
+
+  if (!meeting) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading meeting details...</div>;
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -225,7 +264,7 @@ export default function MeetingDetails() {
             className={`tab ${activeTab === tab ? 'active' : ''}`}
             onClick={() => setActiveTab(tab)}
           >
-            {tab === 'References' ? `References (${attachments.length})` : tab}
+            {tab}
           </button>
         ))}
       </div>
@@ -250,7 +289,7 @@ export default function MeetingDetails() {
             </div>
           </div>
 
-          <div className="card" style={{ marginBottom: '1.5rem' }}>
+          <div className="card" id="summary-section" style={{ marginBottom: '1.5rem', scrollMarginTop: '2rem' }}>
             <div className="section-header">
               <span className="section-title">Executive Summary</span>
               {!isEditingSummary ? (
@@ -283,18 +322,14 @@ export default function MeetingDetails() {
                     <th>Task</th>
                     <th>Assignee</th>
                     <th>Due Date</th>
-                    <th>Priority</th>
-                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {meeting.actionItems?.map((item, idx) => (
                     <tr key={idx}>
                       <td style={{ fontWeight: 500 }}>{item.task}</td>
-                      <td>{item.assignee}</td>
-                      <td>{item.dueDate || item.due_date}</td>
-                      <td><span className={`badge badge-${item.priority === 'High' ? 'danger' : 'warning'}`}>{item.priority}</span></td>
-                      <td><span className="badge badge-neutral">{item.status}</span></td>
+                      <td>{formatAssignee(item.assignee)}</td>
+                      <td>{(item.dueDate && item.dueDate !== 'No Deadline' && item.dueDate !== 'null' && item.dueDate !== '-') ? item.dueDate : (item.due_date && item.due_date !== 'No Deadline' && item.due_date !== 'null' && item.due_date !== '-') ? item.due_date : 'No Deadline'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -360,16 +395,14 @@ export default function MeetingDetails() {
                     <th>Task</th>
                     <th>Assignee</th>
                     <th>Due Date</th>
-                    <th>Priority</th>
                   </tr>
                 </thead>
                 <tbody>
                   {meeting.actionItems?.map((item, idx) => (
                     <tr key={idx}>
                       <td>{item.task}</td>
-                      <td>{item.assignee}</td>
-                      <td>{item.dueDate || item.due_date}</td>
-                      <td>{item.priority}</td>
+                      <td>{formatAssignee(item.assignee)}</td>
+                      <td>{(item.dueDate && item.dueDate !== 'No Deadline' && item.dueDate !== 'null' && item.dueDate !== '-') ? item.dueDate : (item.due_date && item.due_date !== 'No Deadline' && item.due_date !== 'null' && item.due_date !== '-') ? item.due_date : 'No Deadline'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -381,8 +414,15 @@ export default function MeetingDetails() {
 
       {/* ================= TAB 4: TASKS ================= */}
       {activeTab === 'Tasks' && (
-        <div className="card">
-          <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem', color: 'var(--primary)', fontWeight: 600 }}>Meeting Action Items ({meeting.actionItems?.length || 0})</h3>
+        <div className="card" id="tasks-section" style={{ scrollMarginTop: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <h3 style={{ fontSize: '1.125rem', color: 'var(--primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+              <CheckCircle2 className="w-5 h-5" /> AI Generated Tasks (Review & Approve)
+            </h3>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+              {meeting.actionItems?.length || 0} Action Items
+            </span>
+          </div>
           <div className="table-container">
             <table>
               <thead>
@@ -390,8 +430,6 @@ export default function MeetingDetails() {
                   <th>Task</th>
                   <th>Assignee</th>
                   <th>Due Date</th>
-                  <th>Priority</th>
-                  <th>Status</th>
                   <th style={{ textAlign: 'right' }}>Action</th>
                 </tr>
               </thead>
@@ -399,10 +437,8 @@ export default function MeetingDetails() {
                 {meeting.actionItems?.map((item, idx) => (
                   <tr key={idx}>
                     <td style={{ fontWeight: 500 }}>{item.task}</td>
-                    <td>{item.assignee}</td>
-                    <td>{item.dueDate || item.due_date}</td>
-                    <td><span className={`badge badge-${item.priority === 'High' ? 'danger' : 'warning'}`}>{item.priority}</span></td>
-                    <td><span className="badge badge-neutral">{item.status}</span></td>
+                    <td>{formatAssignee(item.assignee)}</td>
+                    <td>{(item.dueDate && item.dueDate !== 'No Deadline' && item.dueDate !== 'null' && item.dueDate !== '-') ? item.dueDate : (item.due_date && item.due_date !== 'No Deadline' && item.due_date !== 'null' && item.due_date !== '-') ? item.due_date : 'No Deadline'}</td>
                     <td style={{ textAlign: 'right' }}>
                       <button
                         className="btn btn-primary btn-sm"
@@ -441,93 +477,7 @@ export default function MeetingDetails() {
         <MeetingAIChat meeting={meeting} />
       )}
 
-      {/* ================= TAB 8: REFERENCES & ATTACHMENTS ================= */}
-      {activeTab === 'References' && (
-        <div className="card">
-          <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Attached Reference Files & Documents</h3>
-              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                Agendas, Presentation slides, Text notes, Specs, or MOM exports linked to this meeting.
-              </p>
-            </div>
-            <button className="btn btn-primary btn-sm" onClick={() => { setShowUploadModal(true); setFormatError(''); setSelectedFile(null); setFileData(null); }}>
-              <Plus className="w-3.5 h-3.5" /> Attach Reference File
-            </button>
-          </div>
 
-          {attachments.length === 0 ? (
-            <div className="empty-state" style={{ padding: '2.5rem', textAlign: 'center' }}>
-              <Paperclip className="w-8 h-8 text-muted" style={{ margin: '0 auto 0.75rem auto', color: 'var(--text-muted)' }} />
-              <h4>No reference files attached yet</h4>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
-                Attach agendas, slides (.pptx), specs, or notes to keep all context for this meeting in one place.
-              </p>
-              <button className="btn btn-primary btn-sm" onClick={() => { setShowUploadModal(true); setFormatError(''); setSelectedFile(null); setFileData(null); }}>
-                <Plus className="w-3.5 h-3.5" /> Attach First File
-              </button>
-            </div>
-          ) : (
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Document Name</th>
-                    <th>Category</th>
-                    <th>Format</th>
-                    <th>Date Added</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attachments.map((doc) => {
-                    const isPdf = doc.type === 'PDF' || (doc.fileName || '').toLowerCase().endsWith('.pdf');
-                    return (
-                      <tr key={doc.id}>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', fontWeight: 500 }}>
-                            <FileText className="w-4 h-4 text-muted" style={{ color: isPdf ? '#ef4444' : '#2563eb' }} />
-                            <span>{doc.fileName}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className="badge badge-info" style={{ fontSize: '0.75rem' }}>
-                            {doc.category || 'Reference Note'}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="badge badge-neutral" style={{ fontSize: '0.75rem' }}>
-                            {doc.type}
-                          </span>
-                        </td>
-                        <td style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{doc.date}</td>
-                        <td style={{ textAlign: 'right' }}>
-                          <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
-                            <button
-                              className="btn btn-outline btn-sm"
-                              onClick={() => downloadDocumentFile(doc, meeting)}
-                            >
-                              <Download className="w-3.5 h-3.5" /> Download
-                            </button>
-                            <button
-                              className="btn btn-ghost btn-sm"
-                              style={{ color: 'var(--danger)' }}
-                              onClick={(e) => handleDeleteAttachment(doc.id, e)}
-                              title="Delete file attachment"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
 
       {showUploadModal && (
         <div style={{

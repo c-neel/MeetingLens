@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { X, Mail, Calendar, CheckCircle, Clock, User, AlertCircle, Sparkles, Send, ExternalLink, ArrowLeft } from 'lucide-react';
 import { buildGoogleCalendarUrl } from '../utils/calendar';
 import { sendTaskEmailNotification, updateActionItem, getActionItems, getMeetings } from '../services/api';
@@ -15,6 +15,7 @@ const KNOWN_TEAM_MEMBERS = [
 export default function TaskApproval() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [task, setTask] = useState(null);
   const [meeting, setMeeting] = useState(null);
@@ -23,31 +24,73 @@ export default function TaskApproval() {
 
   const [assigneeName, setAssigneeName] = useState('');
   const [assigneeEmail, setAssigneeEmail] = useState('');
-  const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dueDate, setDueDate] = useState('');
   const [dueTime, setDueTime] = useState('17:00');
   const [priority, setPriority] = useState('Medium');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
 
-  // Fetch task on mount
+  // Fetch task on mount — or use data passed from voice meeting via navigation state
   useEffect(() => {
+    // If coming from voice meeting, use task data from navigation state (no DB save happened yet)
+    const voiceTaskData = location.state?.voiceTaskData;
+    if (voiceTaskData) {
+      const taskFromState = {
+        ...voiceTaskData,
+        id: null, // Not saved to DB yet
+      };
+      setTask(taskFromState);
+      const rawAssignee = taskFromState.assignee ? String(taskFromState.assignee).trim() : '';
+      const isPlaceholder = !rawAssignee || ['unassigned', 'none', 'not specified', '-'].includes(rawAssignee.toLowerCase());
+      setAssigneeName(isPlaceholder ? '' : rawAssignee);
+      const rawDate = taskFromState.dueDate || taskFromState.due_date;
+      setDueDate(rawDate && rawDate !== 'No Deadline' && rawDate !== 'null' && rawDate !== '-' ? rawDate : '');
+      setPriority(taskFromState.priority || 'Medium');
+
+      if (!isPlaceholder && rawAssignee) {
+        const match = KNOWN_TEAM_MEMBERS.find(m => m.name.toLowerCase().includes(rawAssignee.toLowerCase()));
+        if (match) {
+          setAssigneeEmail(match.email);
+        } else {
+          setAssigneeEmail(`${rawAssignee.toLowerCase().replace(/\s+/g, '.')}@company.com`);
+        }
+      }
+
+      // Use meeting context from voice meeting
+      const ctx = location.state?.voiceMeetingContext;
+      if (ctx) {
+        setMeeting({
+          title: ctx.title,
+          executive_summary: ctx.executive_summary
+        });
+      }
+
+      setLoading(false);
+      return;
+    }
+
+    // Standard DB fetch for non-voice-meeting flows
     const fetchTaskDetails = async () => {
       try {
         const tasks = await getActionItems();
         const foundTask = tasks.find(t => t.id === parseInt(id));
         if (foundTask) {
           setTask(foundTask);
-          setAssigneeName(foundTask.assignee || '');
-          setDueDate(foundTask.dueDate || foundTask.due_date || new Date().toISOString().split('T')[0]);
+          // Only pre-fill assignee if it's a real name (not a placeholder)
+          const rawAssignee = foundTask.assignee ? String(foundTask.assignee).trim() : '';
+          const isPlaceholder = !rawAssignee || ['unassigned', 'none', 'not specified', '-'].includes(rawAssignee.toLowerCase());
+          setAssigneeName(isPlaceholder ? '' : rawAssignee);
+          const rawDate = foundTask.dueDate || foundTask.due_date;
+          setDueDate(rawDate && rawDate !== 'No Deadline' && rawDate !== 'null' && rawDate !== '-' ? rawDate : '');
           setPriority(foundTask.priority || 'Medium');
           
-          if (foundTask.assignee) {
-            const match = KNOWN_TEAM_MEMBERS.find(m => m.name.toLowerCase().includes(foundTask.assignee.toLowerCase()));
+          if (!isPlaceholder && rawAssignee) {
+            const match = KNOWN_TEAM_MEMBERS.find(m => m.name.toLowerCase().includes(rawAssignee.toLowerCase()));
             if (match) {
               setAssigneeEmail(match.email);
             } else {
-              setAssigneeEmail(`${foundTask.assignee.toLowerCase().replace(/\s+/g, '.')}@company.com`);
+              setAssigneeEmail(`${rawAssignee.toLowerCase().replace(/\s+/g, '.')}@company.com`);
             }
           }
 
@@ -85,11 +128,13 @@ export default function TaskApproval() {
     setIsSubmitting(true);
     setStatusMessage(null);
 
+    const finalDueDate = dueDate && dueDate.trim() ? dueDate.trim() : 'No Deadline';
+
     const payload = {
       recipient_name: assigneeName.trim(),
       recipient_email: assigneeEmail.trim(),
       task_name: task.task,
-      due_date: dueDate,
+      due_date: finalDueDate,
       due_time: dueTime,
       priority: priority,
       meeting_id: meeting?.id || task.meeting_id || 1,
@@ -104,18 +149,74 @@ export default function TaskApproval() {
         await updateActionItem(task.id, {
           status: 'In Progress',
           assignee: assigneeName.trim(),
-          due_date: dueDate
+          due_date: finalDueDate
         });
+      }
+
+      // Update active draft in sessionStorage so the Analyze File review page immediately shows the assigned person
+      try {
+        const draftStr = sessionStorage.getItem('meetai_analysis_draft');
+        if (draftStr) {
+          const draft = JSON.parse(draftStr);
+          if (draft && draft.editedTasks) {
+            const updatedTasks = draft.editedTasks.map(t => {
+              if (t.task === task.task || t.id === task.id) {
+                return {
+                  ...t,
+                  assignee: assigneeName.trim(),
+                  dueDate: finalDueDate,
+                  due_date: finalDueDate,
+                  status: 'In Progress'
+                };
+              }
+              return t;
+            });
+            sessionStorage.setItem('meetai_analysis_draft', JSON.stringify({
+              ...draft,
+              editedTasks: updatedTasks
+            }));
+          }
+        }
+      } catch (e) {
+        console.error('Failed to sync draft in sessionStorage', e);
+      }
+
+      // Also sync voice meeting draft if present
+      try {
+        const voiceDraftStr = sessionStorage.getItem('meetai_voice_draft');
+        if (voiceDraftStr) {
+          const voiceDraft = JSON.parse(voiceDraftStr);
+          if (voiceDraft && voiceDraft.editedTasks) {
+            const updatedTasks = voiceDraft.editedTasks.map(t => {
+              if (t.task === task.task || t.id === task.id) {
+                return {
+                  ...t,
+                  assignee: assigneeName.trim(),
+                  dueDate: finalDueDate,
+                  due_date: finalDueDate,
+                  status: 'In Progress'
+                };
+              }
+              return t;
+            });
+            sessionStorage.setItem('meetai_voice_draft', JSON.stringify({
+              ...voiceDraft,
+              editedTasks: updatedTasks
+            }));
+          }
+        }
+      } catch (e) {
+        console.error('Failed to sync voice draft in sessionStorage', e);
       }
 
       setStatusMessage({
         type: 'success',
-        text: `✓ Task Approved! Notification email & MOM report dispatched to ${assigneeEmail}. Redirecting...`
+        text: res?.message ? `✓ ${res.message}` : `✓ Task Delegated! Notification email dispatched to ${assigneeEmail}. Returning to review...`
       });
 
       setTimeout(() => {
-        navigate('/tasks');
-      }, 1800);
+        handleReturn();
+      }, 1400);
     } catch (err) {
       setStatusMessage({
         type: 'error',
@@ -136,7 +237,48 @@ export default function TaskApproval() {
     window.open(url, '_blank');
   };
 
+  const handleReturn = () => {
+    // 1. If user came from voice meeting, navigate back to /voice-meeting (draft will be restored)
+    if (location.state?.from === 'voice-meeting' || sessionStorage.getItem('meetai_voice_draft')) {
+      navigate('/voice-meeting');
+      return;
+    }
 
+    // 2. If explicit returnUrl provided in navigation state (e.g. /analyze#tasks-review-section)
+    if (location.state?.returnUrl) {
+      navigate(location.state.returnUrl, { 
+        state: { 
+          scrollTo: 'tasks', 
+          meetingId: task?.meeting_id || location.state?.meetingId 
+        } 
+      });
+      return;
+    }
+
+    // 3. If user came from analyze page or has an active analysis draft
+    const hasAnalysisDraft = sessionStorage.getItem('meetai_analysis_draft');
+    const meetingId = task?.meeting_id || location.state?.meetingId;
+
+    if (location.state?.from === 'analyze' || hasAnalysisDraft) {
+      navigate(meetingId ? `/analyze?meetingId=${meetingId}#tasks-review-section` : '/analyze#tasks-review-section', {
+        state: { scrollTo: 'tasks', meetingId }
+      });
+      return;
+    }
+
+    // 4. If there is a meeting associated with this task, redirect to the AI Generated Tasks / review section
+    if (meetingId) {
+      navigate(`/analyze?meetingId=${meetingId}#tasks-review-section`, {
+        state: { scrollTo: 'tasks', meetingId }
+      });
+      return;
+    }
+
+    // 5. Fallback to tasks list
+    navigate('/tasks');
+  };
+
+  const handleCancel = handleReturn;
 
   if (loading) return <div className="card" style={{ padding: '3rem', margin: '2rem auto', maxWidth: '600px', textAlign: 'center' }}>Loading task details...</div>;
   if (error) return <div className="card" style={{ padding: '3rem', margin: '2rem auto', maxWidth: '600px', textAlign: 'center', color: 'red' }}>{error}</div>;
@@ -145,7 +287,7 @@ export default function TaskApproval() {
   return (
     <div className="animate-fadeIn">
       <div className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <button className="btn btn-ghost" onClick={() => navigate(task.meeting_id ? `/meetings/${task.meeting_id}` : '/tasks')} style={{ padding: '0.5rem' }}>
+        <button className="btn btn-ghost" onClick={handleCancel} style={{ padding: '0.5rem' }}>
           <ArrowLeft className="w-5 h-5" />
         </button>
         <span>Approve & Delegate Task</span>
@@ -223,27 +365,25 @@ export default function TaskApproval() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.375rem' }}>
-                Deadline Date *
+                Deadline Date (Optional)
               </label>
               <input
                 type="date"
                 className="form-input"
                 value={dueDate}
                 onChange={e => setDueDate(e.target.value)}
-                required
               />
             </div>
 
             <div>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.375rem' }}>
-                Deadline Time *
+                Deadline Time (Optional)
               </label>
               <input
                 type="time"
                 className="form-input"
                 value={dueTime}
                 onChange={e => setDueTime(e.target.value)}
-                required
               />
             </div>
 
@@ -264,24 +404,9 @@ export default function TaskApproval() {
             </div>
           </div>
 
-          {/* Calendar Actions Bar */}
-          <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)' }}>📅 Calendar Integration:</span>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
-                onClick={handleOpenGoogleCalendar}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}
-              >
-                <ExternalLink className="w-4 h-4 text-primary" /> Add to Google Calendar
-              </button>
-            </div>
-          </div>
-
           {/* Footer Buttons */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }}>
-            <button type="button" className="btn btn-outline btn-lg" onClick={() => navigate(task.meeting_id ? `/meetings/${task.meeting_id}` : '/tasks')}>
+            <button type="button" className="btn btn-outline btn-lg" onClick={handleCancel}>
               Cancel
             </button>
             <button type="submit" className="btn btn-primary btn-lg" disabled={isSubmitting}>

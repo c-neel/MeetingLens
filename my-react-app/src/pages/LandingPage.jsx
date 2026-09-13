@@ -47,7 +47,7 @@ export default function LandingPage() {
           <div className="step-item">
             <div className="step-number">3</div>
             <h4>Review & Approve</h4>
-            <p>Review AI-generated tasks with confidence scores</p>
+            <p>Review AI-generated tasks and set completion deadlines</p>
           </div>
           <div className="step-item">
             <div className="step-number">4</div>
@@ -84,8 +84,8 @@ export default function LandingPage() {
           <div className="feature-icon" style={{ background: 'var(--info-light)', color: 'var(--info)' }}>
             <Shield className="w-7 h-7" />
           </div>
-          <h3>Confidence Scores</h3>
-          <p>AI shows confidence levels for each extracted task. Uncertain items are flagged for human review.</p>
+          <h3>Deadline Management</h3>
+          <p>Assign tasks to team members or yourself with custom deadlines and priority levels.</p>
         </div>
         <div className="feature-card">
           <div className="feature-icon" style={{ background: '#f0fdf4', color: '#15803d' }}>

@@ -1,7 +1,5 @@
 <?php
 // backend/config/database.php
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
 
 $host = "localhost";
 $db_name = "meeting_assistant";
@@ -16,4 +14,3 @@ try {
     echo json_encode(["message" => "Database connection failed. Please ensure MySQL is running (e.g., via XAMPP) and the database is created. Details: " . $exception->getMessage()]);
     exit();
 }
-?>

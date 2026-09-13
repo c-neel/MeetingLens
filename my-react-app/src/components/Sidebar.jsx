@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, PlusCircle, Mic, Video, Calendar, CheckSquare, FileText, Settings, User, Sparkles } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Mic, Video, Calendar, CheckSquare, FileBarChart, Settings, User, Sparkles } from 'lucide-react';
 
 export default function Sidebar() {
   return (
@@ -15,10 +15,6 @@ export default function Sidebar() {
         <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <LayoutDashboard className="w-4 h-4" />
           <span>Dashboard</span>
-        </NavLink>
-        <NavLink to="/online-meeting" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-          <Video className="w-4 h-4" />
-          <span>Online Meeting</span>
         </NavLink>
         <NavLink to="/analyze" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <PlusCircle className="w-4 h-4" />
@@ -38,9 +34,9 @@ export default function Sidebar() {
           <CheckSquare className="w-4 h-4" />
           <span>Tasks</span>
         </NavLink>
-        <NavLink to="/documents" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-          <FileText className="w-4 h-4" />
-          <span>Documents</span>
+        <NavLink to="/reports" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+          <FileBarChart className="w-4 h-4" />
+          <span>Reports & Export</span>
         </NavLink>
       </nav>
 
@@ -50,10 +46,10 @@ export default function Sidebar() {
           <Sparkles className="w-4 h-4" />
           <span>Landing Page</span>
         </NavLink>
-        <a href="#" className="nav-link">
+        <NavLink to="/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <Settings className="w-4 h-4" />
           <span>Settings</span>
-        </a>
+        </NavLink>
       </div>
     </div>
   );

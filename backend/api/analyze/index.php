@@ -1,7 +1,37 @@
 <?php
 // backend/api/analyze/index.php
 // AI Meeting Analysis Endpoint — Calls Google Gemini API
-// STEP-BY-STEP DIAGNOSTIC LOGGING enabled
+// Hardened with strict JSON output, error buffering, and fallback model support
+
+// Prevent any PHP warnings/notices from corrupting the JSON response stream
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
+// Buffer all output so that accidental whitespace or warnings never leak before headers
+ob_start();
+
+// Catch fatal errors and output clean JSON with HTTP 500
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR])) {
+        if (ob_get_level() > 0) {
+            ob_clean();
+        }
+        if (!headers_sent()) {
+            http_response_code(500);
+            header("Content-Type: application/json; charset=UTF-8");
+            header("Access-Control-Allow-Origin: *");
+        }
+        echo json_encode([
+            "message" => "Backend execution error: " . $error['message'],
+            "error_type" => "PHP_FATAL_ERROR",
+            "file" => basename($error['file']),
+            "line" => $error['line'],
+            "fallback" => false
+        ]);
+        exit;
+    }
+});
 
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
@@ -9,62 +39,71 @@ header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    if (ob_get_level() > 0) ob_clean();
     http_response_code(200);
     exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    if (ob_get_level() > 0) ob_clean();
     http_response_code(405);
     echo json_encode(["message" => "Method not allowed. Use POST."]);
     exit;
 }
 
-include_once '../../config/ai_config.php';
+try {
+    include_once __DIR__ . '/../../config/ai_config.php';
 
-// ============================================================
-// STEP 1: VALIDATE API KEY
-// ============================================================
-$keyStatus = getKeyDiagnostic();
-error_log("[ANALYZE] Gemini API key status: " . $keyStatus);
-error_log("[ANALYZE] Gemini model: " . GEMINI_MODEL);
+    // ============================================================
+    // STEP 1: VALIDATE API KEY
+    // ============================================================
+    $keyStatus = getKeyDiagnostic();
+    error_log("[ANALYZE] Gemini API key status: " . $keyStatus);
+    error_log("[ANALYZE] Gemini model: " . GEMINI_MODEL);
 
-if (!isGeminiKeyConfigured()) {
-    http_response_code(500);
-    $msg = ($keyStatus === 'NOT_SET')
-        ? 'Gemini API key is not configured. Open backend/config/ai_config.php and paste your API key (starts with AIzaSy). Get one free at https://aistudio.google.com/apikey'
-        : 'Gemini API key has invalid format. Valid Google API keys start with "AIzaSy". Current key prefix: "' . substr(GEMINI_API_KEY, 0, 4) . '..."';
-    echo json_encode([
-        "message" => $msg,
-        "error_type" => "API_KEY_" . $keyStatus,
-        "api_key_found" => false,
-        "fallback" => false
-    ]);
-    exit;
-}
+    if (!isGeminiKeyConfigured()) {
+        if (ob_get_level() > 0) ob_clean();
+        http_response_code(500);
+        $msg = ($keyStatus === 'NOT_SET')
+            ? 'Gemini API key is not configured. Open backend/config/ai_config.php and paste your API key. Get one free at https://aistudio.google.com/apikey'
+            : 'Gemini API key appears invalid. Current key prefix: "' . substr(GEMINI_API_KEY, 0, 4) . '..."';
+        echo json_encode([
+            "message" => $msg,
+            "error_type" => "API_KEY_" . $keyStatus,
+            "api_key_found" => false,
+            "fallback" => false
+        ]);
+        exit;
+    }
 
-// ============================================================
-// STEP 2: READ AND VALIDATE TRANSCRIPT
-// ============================================================
-$data = json_decode(file_get_contents("php://input"));
+    // ============================================================
+    // STEP 2: READ AND VALIDATE TRANSCRIPT
+    // ============================================================
+    $rawInput = file_get_contents("php://input");
+    $data = json_decode($rawInput);
 
-if (empty($data->transcript)) {
-    http_response_code(400);
-    echo json_encode(["message" => "No transcript text provided."]);
-    exit;
-}
+    if (!$data || !is_object($data) || empty($data->transcript)) {
+        if (ob_get_level() > 0) ob_clean();
+        http_response_code(400);
+        echo json_encode([
+            "message" => "No transcript text provided or invalid JSON payload.",
+            "error_type" => "INVALID_PAYLOAD"
+        ]);
+        exit;
+    }
 
-$transcript = $data->transcript;
-$meetingTitle = !empty($data->title) ? $data->title : 'Untitled Meeting';
+    // Clean and ensure valid UTF-8
+    $transcript = mb_convert_encoding((string)$data->transcript, 'UTF-8', 'UTF-8');
+    $meetingTitle = !empty($data->title) ? mb_convert_encoding((string)$data->title, 'UTF-8', 'UTF-8') : 'Untitled Meeting';
 
-// Diagnostic logging (never log API key)
-error_log("[ANALYZE] Meeting title: " . $meetingTitle);
-error_log("[ANALYZE] Transcript length: " . strlen($transcript) . " characters");
-error_log("[ANALYZE] Transcript first 500 chars: " . substr($transcript, 0, 500));
+    // Diagnostic logging
+    error_log("[ANALYZE] Meeting title: " . $meetingTitle);
+    error_log("[ANALYZE] Transcript length: " . strlen($transcript) . " characters");
 
-// ============================================================
-// STEP 3: BUILD GEMINI PROMPT
-// ============================================================
-$systemPrompt = <<<PROMPT
+    // ============================================================
+    // STEP 3: BUILD GEMINI PROMPT
+    // ============================================================
+    $systemPrompt = <<<PROMPT
 You are an expert meeting intelligence assistant.
 
 Analyze ONLY the meeting transcript provided below.
@@ -85,13 +124,13 @@ INSTRUCTIONS:
 
 2. DECISIONS: Extract ONLY decisions that were explicitly agreed upon or clearly finalized during the meeting.
    A decision means "What did the team agree/finalize?" — NOT an action item.
-   Each decision should be a specific string from the transcript.
+   Return as an array of clear strings.
 
 3. ACTION ITEMS: Extract tasks that require someone to do something.
    - task: Exact description of what needs to be done
-   - assignee: The person's name from the transcript, or "Unassigned" if not mentioned
+   - assignee: Always set to "-" (Do NOT assign any person's name automatically. All tasks must remain unassigned as "-" until the user explicitly assigns or delegates them).
    - due_date: In YYYY-MM-DD format if mentioned, or null if not
-   - priority: Use ONLY what the transcript says. If they say "high priority" → "High". If they say "medium priority" → "Medium". If no priority mentioned → "Not specified"
+   - priority: Use ONLY what the transcript says. If "high priority" -> "High". If "medium" -> "Medium". Otherwise "Not specified"
    - confidence: 90-100 if explicitly stated, 70-89 if implied, 50-69 if uncertain
    - status: "Pending"
 
@@ -107,7 +146,7 @@ Return ONLY valid JSON with exactly this structure:
   "action_items": [
     {
       "task": "...",
-      "assignee": "...",
+      "assignee": "-",
       "due_date": "YYYY-MM-DD or null",
       "priority": "High, Medium, Low, or Not specified",
       "confidence": 85,
@@ -131,198 +170,363 @@ Return ONLY valid JSON with exactly this structure:
 }
 PROMPT;
 
-// Build the full user message with the actual transcript
-$userMessage = $systemPrompt . "\n\n--- MEETING TRANSCRIPT ---\nTitle: " . $meetingTitle . "\n\n" . $transcript . "\n--- END TRANSCRIPT ---";
+    $userMessage = $systemPrompt . "\n\n--- MEETING TRANSCRIPT ---\nTitle: " . $meetingTitle . "\n\n" . $transcript . "\n--- END TRANSCRIPT ---";
 
-$requestBody = json_encode([
-    "contents" => [
-        [
-            "role" => "user",
-            "parts" => [
-                ["text" => $userMessage]
+    $requestBody = json_encode([
+        "contents" => [
+            [
+                "role" => "user",
+                "parts" => [
+                    ["text" => $userMessage]
+                ]
             ]
+        ],
+        "generationConfig" => [
+            "temperature" => 0.2,
+            "topP" => 0.8,
+            "maxOutputTokens" => 8192,
+            "responseMimeType" => "application/json"
         ]
-    ],
-    "generationConfig" => [
-        "temperature" => 0.2,
-        "topP" => 0.8,
-        "maxOutputTokens" => 8192,
-        "responseMimeType" => "application/json"
-    ]
-]);
-
-error_log("[ANALYZE] Gemini request body length: " . strlen($requestBody) . " bytes");
-
-// ============================================================
-// STEP 4: CALL GEMINI API
-// ============================================================
-$apiUrl = GEMINI_API_URL . '?key=' . GEMINI_API_KEY;
-
-$ch = curl_init();
-curl_setopt_array($ch, [
-    CURLOPT_URL => $apiUrl,
-    CURLOPT_POST => true,
-    CURLOPT_POSTFIELDS => $requestBody,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER => [
-        'Content-Type: application/json'
-    ],
-    CURLOPT_TIMEOUT => 90,
-    CURLOPT_SSL_VERIFYPEER => false
-]);
-
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlError = curl_error($ch);
-curl_close($ch);
-
-error_log("[ANALYZE] Gemini HTTP status: " . $httpCode);
-
-// ============================================================
-// STEP 5: HANDLE ERRORS (with specific error types)
-// ============================================================
-if ($curlError) {
-    error_log("[ANALYZE] cURL error: " . $curlError);
-    http_response_code(503);
-    echo json_encode([
-        "message" => "Failed to connect to Gemini API. Check your internet connection.",
-        "error" => $curlError,
-        "error_type" => "CONNECTION_FAILED",
-        "fallback" => false
     ]);
-    exit;
-}
 
-if ($httpCode !== 200) {
-    $errorData = json_decode($response, true);
-    $errorMsg = $errorData['error']['message'] ?? 'Unknown Gemini API error';
-    $errorStatus = $errorData['error']['status'] ?? 'UNKNOWN';
-
-    error_log("[ANALYZE] Gemini API error: HTTP $httpCode - $errorMsg");
-
-    // Map HTTP codes to user-friendly explanations
-    $errorExplanation = match($httpCode) {
-        400 => "Invalid request sent to Gemini. This may be a prompt or configuration issue.",
-        401, 403 => "API key authentication failed. Your key may be invalid, expired, or not authorized for this API. Get a new key at https://aistudio.google.com/apikey",
-        404 => "Model '" . GEMINI_MODEL . "' not found. It may have been deprecated. Try changing GEMINI_MODEL in ai_config.php.",
-        429 => "Rate limit exceeded. You've sent too many requests. Wait a minute and try again, or check your API quota at https://console.cloud.google.com/",
-        500, 503 => "Gemini service is temporarily unavailable. Try again in a few seconds.",
-        default => "Unexpected error from Gemini API."
+    // Helper to perform curl request to Gemini
+    $callGemini = function($url) use ($requestBody) {
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $requestBody,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_TIMEOUT => 90,
+            CURLOPT_SSL_VERIFYPEER => false
+        ]);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+        return [$response, $httpCode, $curlError];
     };
 
-    http_response_code($httpCode >= 500 ? 502 : $httpCode);
-    echo json_encode([
-        "message" => "Gemini API Error (HTTP $httpCode): $errorExplanation",
-        "error" => $errorMsg,
-        "error_type" => "GEMINI_HTTP_$httpCode",
-        "gemini_status" => $errorStatus,
-        "http_code" => $httpCode,
-        "model" => GEMINI_MODEL,
-        "fallback" => false
-    ]);
-    exit;
-}
+    // ============================================================
+    // STEP 4: CALL GEMINI API (with fallback model on 503/429/404)
+    // ============================================================
+    $activeModel = GEMINI_MODEL;
+    $apiUrl = GEMINI_API_URL . '?key=' . GEMINI_API_KEY;
 
-// ============================================================
-// STEP 6: PARSE GEMINI RESPONSE
-// ============================================================
-$geminiResponse = json_decode($response, true);
+    list($response, $httpCode, $curlError) = $callGemini($apiUrl);
 
-// Extract the text content from Gemini's response
-$aiText = '';
-if (isset($geminiResponse['candidates'][0]['content']['parts'][0]['text'])) {
-    $aiText = $geminiResponse['candidates'][0]['content']['parts'][0]['text'];
-}
-
-error_log("[ANALYZE] Gemini response text length: " . strlen($aiText) . " chars");
-error_log("[ANALYZE] Gemini response first 300 chars: " . substr($aiText, 0, 300));
-
-if (empty($aiText)) {
-    // Check for safety blocks
-    $blockReason = $geminiResponse['candidates'][0]['finishReason'] ?? 'UNKNOWN';
-    error_log("[ANALYZE] Gemini returned empty text. Finish reason: $blockReason");
-    http_response_code(502);
-    echo json_encode([
-        "message" => "Gemini returned an empty response. Finish reason: $blockReason",
-        "error_type" => "EMPTY_RESPONSE",
-        "finish_reason" => $blockReason,
-        "fallback" => false
-    ]);
-    exit;
-}
-
-// Clean up the AI response text (remove markdown code blocks if present)
-$aiText = trim($aiText);
-$aiText = preg_replace('/^```json\s*/i', '', $aiText);
-$aiText = preg_replace('/^```\s*/i', '', $aiText);
-$aiText = preg_replace('/\s*```$/', '', $aiText);
-
-// Parse JSON
-$analysisResult = json_decode($aiText, true);
-
-if (json_last_error() !== JSON_ERROR_NONE) {
-    error_log("[ANALYZE] JSON parse error: " . json_last_error_msg());
-    error_log("[ANALYZE] Raw AI text: " . substr($aiText, 0, 500));
-    http_response_code(502);
-    echo json_encode([
-        "message" => "Gemini returned invalid JSON. The AI response could not be parsed.",
-        "error_type" => "INVALID_JSON",
-        "json_error" => json_last_error_msg(),
-        "raw_ai_output" => $aiText,
-        "fallback" => false
-    ]);
-    exit;
-}
-
-// ============================================================
-// STEP 7: VALIDATE & FORMAT OUTPUT
-// ============================================================
-error_log("[ANALYZE] Successfully parsed AI response. Formatting output...");
-
-// Ensure all required fields exist with defaults
-$defaults = [
-    'executive_summary' => 'No executive summary generated.',
-    'detailed_summary' => '',
-    'decisions' => [],
-    'action_items' => [],
-    'risks' => [],
-    'suggestions' => [],
-    'follow_ups' => [],
-    'ai_remarks' => [],
-    'quality_score' => 70,
-    'next_meeting_agenda' => []
-];
-
-foreach ($defaults as $key => $defaultValue) {
-    if (!isset($analysisResult[$key])) {
-        $analysisResult[$key] = $defaultValue;
+    // If primary model failed with high demand (503) or rate limit (429) or not found (404), try fallback
+    if (($httpCode === 503 || $httpCode === 429 || $httpCode === 404) && defined('GEMINI_FALLBACK_API_URL')) {
+        error_log("[ANALYZE] Primary model " . GEMINI_MODEL . " returned HTTP $httpCode, attempting fallback: " . GEMINI_FALLBACK_MODEL);
+        $fallbackUrl = GEMINI_FALLBACK_API_URL . '?key=' . GEMINI_API_KEY;
+        list($fbResponse, $fbHttpCode, $fbCurlError) = $callGemini($fallbackUrl);
+        if ($fbHttpCode === 200) {
+            $response = $fbResponse;
+            $httpCode = $fbHttpCode;
+            $curlError = $fbCurlError;
+            $activeModel = GEMINI_FALLBACK_MODEL;
+        }
     }
+
+    if ($curlError) {
+        error_log("[ANALYZE] cURL error: " . $curlError);
+        if (ob_get_level() > 0) ob_clean();
+        http_response_code(503);
+        echo json_encode([
+            "message" => "Failed to connect to Gemini API. Check your network connection.",
+            "error" => $curlError,
+            "error_type" => "CONNECTION_FAILED",
+            "fallback" => false
+        ]);
+        exit;
+    }
+
+    if ($httpCode !== 200) {
+        $errorData = json_decode($response, true);
+        $errorMsg = $errorData['error']['message'] ?? 'Unknown Gemini API error';
+        $errorStatus = $errorData['error']['status'] ?? 'UNKNOWN';
+
+        error_log("[ANALYZE] Gemini API error: HTTP $httpCode - $errorMsg");
+
+        $errorExplanation = match($httpCode) {
+            400 => "Invalid request sent to Gemini. Check your prompt or configuration.",
+            401, 403 => "API key authentication failed. Your key may be invalid or expired.",
+            404 => "Model '$activeModel' not found. It may have been deprecated.",
+            429 => "Rate limit exceeded. Too many requests have been sent. Please wait a minute and retry.",
+            500, 503 => "Gemini model is currently experiencing high demand. Please retry in a few seconds.",
+            default => "Unexpected error from Gemini API."
+        };
+
+        if (ob_get_level() > 0) ob_clean();
+        http_response_code($httpCode >= 500 ? 502 : $httpCode);
+        echo json_encode([
+            "message" => "Gemini API Error (HTTP $httpCode): $errorExplanation",
+            "error" => $errorMsg,
+            "error_type" => "GEMINI_HTTP_$httpCode",
+            "gemini_status" => $errorStatus,
+            "http_code" => $httpCode,
+            "model" => $activeModel,
+            "fallback" => false
+        ]);
+        exit;
+    }
+
+    // ============================================================
+    // STEP 6: EXTRACT & PARSE GEMINI RESPONSE TEXT
+    // ============================================================
+    $geminiResponse = json_decode($response, true);
+    $aiText = '';
+
+    // Search across all parts for the model's text response (handles thinking mode)
+    if (!empty($geminiResponse['candidates'][0]['content']['parts'])) {
+        foreach ($geminiResponse['candidates'][0]['content']['parts'] as $part) {
+            if (!empty($part['text'])) {
+                // If this part contains a JSON structure, prioritize it
+                if (str_contains($part['text'], '{')) {
+                    $aiText = $part['text'];
+                    break;
+                }
+                if (empty($aiText)) {
+                    $aiText = $part['text'];
+                }
+            }
+        }
+    }
+
+    $aiText = trim($aiText);
+
+    if (empty($aiText)) {
+        $blockReason = $geminiResponse['candidates'][0]['finishReason'] ?? 'UNKNOWN';
+        error_log("[ANALYZE] Gemini returned empty text. Finish reason: $blockReason");
+        if (ob_get_level() > 0) ob_clean();
+        http_response_code(502);
+        echo json_encode([
+            "message" => "Gemini returned an empty response. Finish reason: $blockReason",
+            "error_type" => "EMPTY_RESPONSE",
+            "finish_reason" => $blockReason,
+            "fallback" => false
+        ]);
+        exit;
+    }
+
+    // Strip markdown code fences if present (e.g. ```json ... ```)
+    if (preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/i', $aiText, $fenceMatch)) {
+        $aiText = trim($fenceMatch[1]);
+    }
+
+    // If still not clean JSON, extract from first '{' to last '}'
+    if (!str_starts_with($aiText, '{')) {
+        $firstBrace = strpos($aiText, '{');
+        $lastBrace = strrpos($aiText, '}');
+        if ($firstBrace !== false && $lastBrace !== false && $lastBrace > $firstBrace) {
+            $aiText = substr($aiText, $firstBrace, $lastBrace - $firstBrace + 1);
+        }
+    }
+
+    $analysisResult = json_decode($aiText, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE || !is_array($analysisResult)) {
+        error_log("[ANALYZE] JSON parse error: " . json_last_error_msg());
+        error_log("[ANALYZE] Raw AI text: " . substr($aiText, 0, 500));
+        if (ob_get_level() > 0) ob_clean();
+        http_response_code(502);
+        echo json_encode([
+            "message" => "Gemini returned text that could not be parsed as JSON.",
+            "error_type" => "INVALID_JSON",
+            "json_error" => json_last_error_msg(),
+            "raw_ai_output" => substr($aiText, 0, 500),
+            "fallback" => false
+        ]);
+        exit;
+    }
+
+    // ============================================================
+    // STEP 7: DEFENSIVE NORMALIZATION (Never throws PHP TypeError)
+    // ============================================================
+    
+    // Executive summary
+    $execSummary = '';
+    if (!empty($analysisResult['executive_summary']) && is_string($analysisResult['executive_summary'])) {
+        $execSummary = $analysisResult['executive_summary'];
+    } elseif (!empty($analysisResult['summary']) && is_string($analysisResult['summary'])) {
+        $execSummary = $analysisResult['summary'];
+    } else {
+        $execSummary = 'No executive summary generated.';
+    }
+
+    // Detailed summary
+    $detailedSummary = (!empty($analysisResult['detailed_summary']) && is_string($analysisResult['detailed_summary']))
+        ? $analysisResult['detailed_summary']
+        : $execSummary;
+
+    // Decisions (safely convert string or object array to flat array of strings)
+    $cleanDecisions = [];
+    if (!empty($analysisResult['decisions'])) {
+        if (is_string($analysisResult['decisions'])) {
+            $cleanDecisions = [trim($analysisResult['decisions'])];
+        } elseif (is_array($analysisResult['decisions'])) {
+            foreach ($analysisResult['decisions'] as $d) {
+                if (is_string($d) && trim($d) !== '') {
+                    $cleanDecisions[] = trim($d);
+                } elseif (is_array($d)) {
+                    $dText = $d['decision'] ?? $d['decision_text'] ?? $d['text'] ?? json_encode($d);
+                    $cleanDecisions[] = (string)$dText;
+                }
+            }
+        }
+    }
+
+    // Action items (safely handle strings, missing keys, and invalid formats)
+    $cleanActionItems = [];
+    if (!empty($analysisResult['action_items'])) {
+        if (is_array($analysisResult['action_items'])) {
+            foreach ($analysisResult['action_items'] as $item) {
+                if (is_string($item) && trim($item) !== '') {
+                    $cleanActionItems[] = [
+                        'task' => trim($item),
+                        'assignee' => '-',
+                        'due_date' => null,
+                        'dueDate' => null,
+                        'priority' => 'Not specified',
+                        'confidence' => 75,
+                        'status' => 'Pending'
+                    ];
+                } elseif (is_array($item)) {
+                    $task = !empty($item['task']) ? (string)$item['task'] : (!empty($item['description']) ? (string)$item['description'] : 'Untitled task');
+                    $dueDate = !empty($item['due_date']) ? (string)$item['due_date'] : (!empty($item['dueDate']) ? (string)$item['dueDate'] : null);
+                    $priority = !empty($item['priority']) ? (string)$item['priority'] : 'Not specified';
+                    $confidence = (isset($item['confidence']) && is_numeric($item['confidence'])) ? intval($item['confidence']) : 75;
+                    $status = !empty($item['status']) ? (string)$item['status'] : 'Pending';
+
+                    $cleanActionItems[] = [
+                        'task' => $task,
+                        'assignee' => '-',
+                        'due_date' => $dueDate,
+                        'dueDate' => $dueDate,
+                        'priority' => $priority,
+                        'confidence' => $confidence,
+                        'status' => $status
+                    ];
+                }
+            }
+        }
+    }
+
+    // Risks
+    $cleanRisks = [];
+    if (!empty($analysisResult['risks']) && is_array($analysisResult['risks'])) {
+        foreach ($analysisResult['risks'] as $r) {
+            if (is_string($r) && trim($r) !== '') {
+                $cleanRisks[] = ['text' => trim($r), 'severity' => 'Medium'];
+            } elseif (is_array($r)) {
+                $cleanRisks[] = [
+                    'text' => (string)($r['text'] ?? $r['risk_text'] ?? $r['risk'] ?? ''),
+                    'severity' => (string)($r['severity'] ?? 'Medium')
+                ];
+            }
+        }
+    }
+
+    // Suggestions
+    $cleanSuggestions = [];
+    if (!empty($analysisResult['suggestions']) && is_array($analysisResult['suggestions'])) {
+        foreach ($analysisResult['suggestions'] as $s) {
+            if (is_string($s) && trim($s) !== '') {
+                $cleanSuggestions[] = ['text' => trim($s), 'category' => 'process'];
+            } elseif (is_array($s)) {
+                $cleanSuggestions[] = [
+                    'text' => (string)($s['text'] ?? $s['suggestion_text'] ?? ''),
+                    'category' => (string)($s['category'] ?? 'process')
+                ];
+            }
+        }
+    }
+
+    // Follow ups
+    $cleanFollowUps = [];
+    if (!empty($analysisResult['follow_ups']) && is_array($analysisResult['follow_ups'])) {
+        foreach ($analysisResult['follow_ups'] as $f) {
+            if (is_string($f) && trim($f) !== '') {
+                $cleanFollowUps[] = ['text' => trim($f), 'target_date' => null];
+            } elseif (is_array($f)) {
+                $cleanFollowUps[] = [
+                    'text' => (string)($f['text'] ?? $f['follow_up_text'] ?? ''),
+                    'target_date' => $f['target_date'] ?? null
+                ];
+            }
+        }
+    }
+
+    // AI remarks
+    $cleanAiRemarks = [];
+    if (!empty($analysisResult['ai_remarks']) && is_array($analysisResult['ai_remarks'])) {
+        foreach ($analysisResult['ai_remarks'] as $rem) {
+            if (is_string($rem) && trim($rem) !== '') {
+                $cleanAiRemarks[] = ['text' => trim($rem), 'type' => 'optimization'];
+            } elseif (is_array($rem)) {
+                $cleanAiRemarks[] = [
+                    'text' => (string)($rem['text'] ?? $rem['remark_text'] ?? ''),
+                    'type' => (string)($rem['type'] ?? $rem['remark_type'] ?? 'optimization')
+                ];
+            }
+        }
+    }
+
+    // Quality score
+    $qualityScore = 75;
+    if (isset($analysisResult['quality_score']) && is_numeric($analysisResult['quality_score'])) {
+        $qualityScore = max(0, min(100, intval($analysisResult['quality_score'])));
+    }
+
+    // Next meeting agenda
+    $agenda = [];
+    if (!empty($analysisResult['next_meeting_agenda']) && is_array($analysisResult['next_meeting_agenda'])) {
+        foreach ($analysisResult['next_meeting_agenda'] as $ag) {
+            if (is_string($ag) && trim($ag) !== '') {
+                $agenda[] = trim($ag);
+            }
+        }
+    }
+
+    $finalPayload = [
+        'executive_summary' => $execSummary,
+        'detailed_summary' => $detailedSummary,
+        'summary' => $execSummary,
+        'decisions' => $cleanDecisions,
+        'action_items' => $cleanActionItems,
+        'risks' => $cleanRisks,
+        'suggestions' => $cleanSuggestions,
+        'follow_ups' => $cleanFollowUps,
+        'ai_remarks' => $cleanAiRemarks,
+        'quality_score' => $qualityScore,
+        'next_meeting_agenda' => $agenda,
+        'ai_powered' => true,
+        'model' => $activeModel,
+        'api_key_found' => true
+    ];
+
+    error_log("[ANALYZE] Analysis complete. Decisions: " . count($cleanDecisions) . ", Action items: " . count($cleanActionItems));
+
+    // Clear any potential buffer and output valid JSON
+    if (ob_get_level() > 0) {
+        ob_clean();
+    }
+    http_response_code(200);
+    echo json_encode($finalPayload);
+    exit;
+
+} catch (Throwable $e) {
+    error_log("[ANALYZE] Fatal exception caught: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+    if (ob_get_level() > 0) {
+        ob_clean();
+    }
+    http_response_code(500);
+    echo json_encode([
+        "message" => "An internal server error occurred while analyzing the meeting.",
+        "error_type" => "SERVER_EXCEPTION",
+        "error" => $e->getMessage(),
+        "fallback" => false
+    ]);
+    exit;
 }
-
-// Ensure action items have all required fields
-foreach ($analysisResult['action_items'] as &$item) {
-    if (!isset($item['task'])) $item['task'] = 'Untitled task';
-    if (!isset($item['assignee'])) $item['assignee'] = 'Unassigned';
-    if (!isset($item['due_date'])) $item['due_date'] = null;
-    if (!isset($item['priority'])) $item['priority'] = 'Not specified';
-    if (!isset($item['confidence'])) $item['confidence'] = 75;
-    // Map due_date to dueDate for frontend compatibility
-    $item['dueDate'] = $item['due_date'];
-    if (!isset($item['status'])) $item['status'] = 'Pending';
-}
-
-// Clamp quality score
-$analysisResult['quality_score'] = max(0, min(100, intval($analysisResult['quality_score'])));
-
-// Add summary field (alias for executive_summary for frontend compatibility)
-$analysisResult['summary'] = $analysisResult['executive_summary'];
-
-// Mark that this was real AI
-$analysisResult['ai_powered'] = true;
-$analysisResult['model'] = GEMINI_MODEL;
-$analysisResult['api_key_found'] = true;
-
-error_log("[ANALYZE] ✅ Analysis complete. Decisions: " . count($analysisResult['decisions']) . ", Action items: " . count($analysisResult['action_items']));
-
-echo json_encode($analysisResult);
-?>

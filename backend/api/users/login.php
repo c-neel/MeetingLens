@@ -9,13 +9,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-include_once '../../config/database.php';
+include_once __DIR__ . '/../../config/database.php';
 
 $data = json_decode(file_get_contents("php://input"));
 
 if (!empty($data->email) && !empty($data->password)) {
     try {
-        $query = "SELECT id, name, email, password FROM users WHERE email = :email LIMIT 1";
+        $query = "SELECT id, name, email, password, role FROM users WHERE email = :email LIMIT 1";
         $stmt = $conn->prepare($query);
 
         $email = htmlspecialchars(strip_tags($data->email));
@@ -36,7 +36,8 @@ if (!empty($data->email) && !empty($data->password)) {
                     "user" => array(
                         "id" => $row['id'],
                         "name" => $row['name'],
-                        "email" => $row['email']
+                        "email" => $row['email'],
+                        "role" => !empty($row['role']) ? $row['role'] : 'member'
                     )
                 ));
             } else {

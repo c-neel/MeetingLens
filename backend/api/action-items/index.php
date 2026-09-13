@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-include_once '../../config/database.php';
+include_once __DIR__ . '/../../config/database.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -23,6 +23,10 @@ if ($method === 'GET') {
         
         foreach ($items as &$item) {
             $item['dueDate'] = $item['due_date'];
+            $a = trim((string)($item['assignee'] ?? ''));
+            if ($a === '' || in_array(strtolower($a), ['unassigned', 'none', 'not specified', '-'])) {
+                $item['assignee'] = '-';
+            }
         }
         
         echo json_encode($items);
@@ -46,6 +50,10 @@ if ($method === 'GET') {
             if (isset($data->due_date)) {
                 $updateFields[] = "due_date = :due_date";
                 $params[":due_date"] = $data->due_date;
+            }
+            if (isset($data->priority)) {
+                $updateFields[] = "priority = :priority";
+                $params[":priority"] = $data->priority;
             }
             
             $query = "UPDATE action_items SET " . implode(", ", $updateFields) . " WHERE id = :id";

@@ -20,9 +20,8 @@ export const exportAsPDF = (meeting) => {
   const actionItemsHTML = actionItems.map(item => `
     <tr>
       <td style="padding: 8px; border: 1px solid #cbd5e1;">${item.task || 'Untitled task'}</td>
-      <td style="padding: 8px; border: 1px solid #cbd5e1;">${item.assignee || 'Unassigned'}</td>
-      <td style="padding: 8px; border: 1px solid #cbd5e1;">${item.dueDate || item.due_date || 'N/A'}</td>
-      <td style="padding: 8px; border: 1px solid #cbd5e1;">${item.priority || 'Medium'}</td>
+      <td style="padding: 8px; border: 1px solid #cbd5e1;">${item.assignee && item.assignee !== 'Unassigned' && item.assignee !== '-' ? item.assignee : '-'}</td>
+      <td style="padding: 8px; border: 1px solid #cbd5e1;">${(item.dueDate && item.dueDate !== 'null' && item.dueDate !== '-' && item.dueDate !== 'No Deadline') ? item.dueDate : (item.due_date && item.due_date !== 'null' && item.due_date !== '-' && item.due_date !== 'No Deadline') ? item.due_date : 'No Deadline'}</td>
     </tr>
   `).join('');
 
@@ -74,11 +73,10 @@ export const exportAsPDF = (meeting) => {
               <th>Task</th>
               <th>Assignee</th>
               <th>Due Date</th>
-              <th>Priority</th>
             </tr>
           </thead>
           <tbody>
-            ${actionItemsHTML || '<tr><td colspan="4" style="text-align:center; padding:10px;">No action items recorded.</td></tr>'}
+            ${actionItemsHTML || '<tr><td colspan="3" style="text-align:center; padding:10px;">No action items recorded.</td></tr>'}
           </tbody>
         </table>
       </div>
@@ -106,12 +104,11 @@ export const exportAsWord = (meeting) => {
 
   const decisionsHTML = decisions.map(d => `<li>${typeof d === 'string' ? d : (d.decision_text || d.decision || '')}</li>`).join('');
   
-  const actionItemsHTML = actionItems.map(item => `
+  const wordActionItemsHTML = actionItems.map(item => `
     <tr>
       <td style="padding: 8px; border: 1px solid #cbd5e1;">${item.task || 'Untitled task'}</td>
-      <td style="padding: 8px; border: 1px solid #cbd5e1;">${item.assignee || 'Unassigned'}</td>
-      <td style="padding: 8px; border: 1px solid #cbd5e1;">${item.dueDate || item.due_date || 'N/A'}</td>
-      <td style="padding: 8px; border: 1px solid #cbd5e1;">${item.priority || 'Medium'}</td>
+      <td style="padding: 8px; border: 1px solid #cbd5e1;">${item.assignee && item.assignee !== 'Unassigned' && item.assignee !== '-' ? item.assignee : '-'}</td>
+      <td style="padding: 8px; border: 1px solid #cbd5e1;">${(item.dueDate && item.dueDate !== 'null' && item.dueDate !== '-' && item.dueDate !== 'No Deadline') ? item.dueDate : (item.due_date && item.due_date !== 'null' && item.due_date !== '-' && item.due_date !== 'No Deadline') ? item.due_date : 'No Deadline'}</td>
     </tr>
   `).join('');
 
@@ -149,11 +146,10 @@ export const exportAsWord = (meeting) => {
             <th>Task</th>
             <th>Assignee</th>
             <th>Due Date</th>
-            <th>Priority</th>
           </tr>
         </thead>
         <tbody>
-          ${actionItemsHTML || '<tr><td colspan="4">No action items recorded.</td></tr>'}
+          ${wordActionItemsHTML || '<tr><td colspan="3">No action items recorded.</td></tr>'}
         </tbody>
       </table>
     </body>

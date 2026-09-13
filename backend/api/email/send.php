@@ -5,12 +5,14 @@ header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-include_once '../../config/database.php';
+include_once __DIR__ . '/../../config/database.php';
+include_once __DIR__ . '/../../config/email_config.php';
+include_once __DIR__ . '/../../lib/SmtpMailer.php';
 
 $data = json_decode(file_get_contents("php://input"));
 
@@ -19,27 +21,28 @@ if (!empty($data->recipient_email) && !empty($data->task_name)) {
         $recipient_email = htmlspecialchars(strip_tags($data->recipient_email));
         $recipient_name = !empty($data->recipient_name) ? htmlspecialchars(strip_tags($data->recipient_name)) : 'Team Member';
         $task_name = htmlspecialchars(strip_tags($data->task_name));
-        $due_date = !empty($data->due_date) ? htmlspecialchars(strip_tags($data->due_date)) : date('Y-m-d');
+        $raw_due_date = !empty($data->due_date) ? htmlspecialchars(strip_tags($data->due_date)) : '';
         $due_time = !empty($data->due_time) ? htmlspecialchars(strip_tags($data->due_time)) : '17:00';
+        $has_deadline = !empty($raw_due_date) && !in_array($raw_due_date, ['No Deadline', 'null', '-']);
+        $deadline_display = $has_deadline ? "{$raw_due_date} at {$due_time}" : 'No Deadline';
         $priority = !empty($data->priority) ? htmlspecialchars(strip_tags($data->priority)) : 'Medium';
         $meeting_id = !empty($data->meeting_id) ? intval($data->meeting_id) : null;
         $meeting_title = !empty($data->meeting_title) ? htmlspecialchars(strip_tags($data->meeting_title)) : 'Meeting Action Item';
         $executive_summary = !empty($data->executive_summary) ? htmlspecialchars(strip_tags($data->executive_summary)) : '';
 
-        // Generate Google Calendar Link
-        $start_timestamp = strtotime("$due_date $due_time");
-        if ($start_timestamp === false) {
-            $start_timestamp = time();
+        // Generate Google Calendar Link if deadline is set
+        $google_calendar_url = '';
+        if ($has_deadline) {
+            $start_timestamp = strtotime("{$raw_due_date} {$due_time}");
+            if ($start_timestamp === false) {
+                $start_timestamp = time();
+            }
+            $start_datetime = date('Ymd\THis', $start_timestamp);
+            $end_datetime = date('Ymd\THis', $start_timestamp + 3600); // 1 hour duration
+            $cal_text = urlencode($task_name);
+            $cal_details = urlencode("Action Item from meeting: " . $meeting_title . "\n\nAssignee: " . $recipient_name);
+            $google_calendar_url = "https://calendar.google.com/calendar/render?action=TEMPLATE&text={$cal_text}&dates={$start_datetime}/{$end_datetime}&details={$cal_details}";
         }
-        $start_datetime = date('Ymd\THis', $start_timestamp);
-        $end_datetime = date('Ymd\THis', $start_timestamp + 3600); // 1 hour duration
-        $cal_text = urlencode($task_name);
-        $cal_details = urlencode("Action Item from meeting: " . $meeting_title . "\n\nAssignee: " . $recipient_name);
-        $google_calendar_url = "https://calendar.google.com/calendar/render?action=TEMPLATE&text={$cal_text}&dates={$start_datetime}/{$end_datetime}&details={$cal_details}";
-        // Log notification entry in email_notifications database table
-        $stmt = $conn->prepare("INSERT INTO email_notifications (meeting_id, recipient_email, content_type, status, sent_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)");
-        $stmt->execute([$meeting_id ? $meeting_id : 1, $recipient_email, 'Task Assignment & MOM PDF', 'Sent']);
-        $notification_id = $conn->lastInsertId();
 
         // Build HTML email body with clear task assignment + MOM reference
         $email_html = "
@@ -63,7 +66,7 @@ if (!empty($data->recipient_email) && !empty($data->task_name)) {
                 <table style='width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;'>
                     <tr style='border-bottom: 1px solid #f1f5f9;'>
                         <td style='padding: 10px 0; color: #64748b; font-weight: 600; width: 120px;'>Deadline:</td>
-                        <td style='padding: 10px 0; color: #0f172a; font-weight: 500;'>{$due_date} at {$due_time}</td>
+                        <td style='padding: 10px 0; color: #0f172a; font-weight: 500;'>{$deadline_display}</td>
                     </tr>
                     <tr style='border-bottom: 1px solid #f1f5f9;'>
                         <td style='padding: 10px 0; color: #64748b; font-weight: 600;'>Priority:</td>
@@ -81,12 +84,12 @@ if (!empty($data->recipient_email) && !empty($data->task_name)) {
                     <p style='margin: 0; font-size: 14px; color: #475569; line-height: 1.6;'>{$executive_summary}</p>
                 </div>" : "") . "
 
-
+                " . ($google_calendar_url ? "
                 <div style='margin-bottom: 20px; text-align: center;'>
                     <a href='{$google_calendar_url}' target='_blank' style='display: inline-block; background-color: #0284c7; color: #ffffff; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-weight: 600; font-size: 14px;'>
                         📅 Add Task to Google Calendar
                     </a>
-                </div>
+                </div>" : "") . "
 
                 <div style='background-color: #fefce8; border: 1px solid #fde68a; padding: 14px 16px; border-radius: 6px; margin-bottom: 16px;'>
                     <p style='margin: 0; font-size: 13px; color: #92400e;'>
@@ -94,21 +97,33 @@ if (!empty($data->recipient_email) && !empty($data->task_name)) {
                     </p>
                 </div>
 
-                <p style='font-size: 13px; color: #64748b; margin: 0;'>Please complete the assigned task by the specified deadline. If you have any questions, reach out to the meeting organizer.</p>
+                <p style='font-size: 13px; color: #64748b; margin: 0;'>Please complete the assigned task. If you have any questions, reach out to the meeting organizer.</p>
             </div>
             <div style='background-color: #f8fafc; padding: 12px 24px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8; text-align: center;'>
-                Sent automatically via MeetAI — Task Delegation &amp; Notification System
+                Sent automatically via Meeting Lens — Task Delegation &amp; Notification System
             </div>
         </div>
         ";
 
+        // Dispatch Email using SmtpMailer transport
+        $subject = "📌 Task Assigned: " . $task_name;
+        $dispatchResult = SmtpMailer::dispatch($recipient_email, $recipient_name, $subject, $email_html);
+
+        $dbStatus = (!empty($dispatchResult['delivered']) && $dispatchResult['delivered']) ? 'Sent' : 'Queued';
+
+        // Log notification entry in email_notifications database table
+        $stmt = $conn->prepare("INSERT INTO email_notifications (meeting_id, recipient_email, content_type, status, sent_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)");
+        $stmt->execute([$meeting_id ? $meeting_id : 1, $recipient_email, 'Task Assignment & MOM PDF', $dbStatus]);
+        $notification_id = $conn->lastInsertId();
+
         http_response_code(200);
         echo json_encode(array(
             "success" => true,
-            "message" => "Email notification dispatched successfully to {$recipient_email}.",
+            "message" => $dispatchResult['message'],
             "notification_id" => $notification_id,
             "recipient_email" => $recipient_email,
             "recipient_name" => $recipient_name,
+            "delivery_status" => $dbStatus,
             "email_body_preview" => $email_html
         ));
     } catch (PDOException $e) {

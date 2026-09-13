@@ -12,9 +12,14 @@ const KNOWN_TEAM_MEMBERS = [
 ];
 
 export default function TaskApprovalModal({ task, meeting, isOpen, onClose, onApproved }) {
+  const getInitialDueDate = (t) => {
+    const raw = t?.dueDate || t?.due_date;
+    return raw && raw !== 'No Deadline' && raw !== 'null' && raw !== '-' ? raw : '';
+  };
+
   const [assigneeName, setAssigneeName] = useState(task?.assignee || '');
   const [assigneeEmail, setAssigneeEmail] = useState('');
-  const [dueDate, setDueDate] = useState(task?.dueDate || task?.due_date || new Date().toISOString().split('T')[0]);
+  const [dueDate, setDueDate] = useState(getInitialDueDate(task));
   const [dueTime, setDueTime] = useState('17:00');
   const [priority, setPriority] = useState(task?.priority || 'Medium');
   const [notes, setNotes] = useState('');
@@ -25,7 +30,7 @@ export default function TaskApprovalModal({ task, meeting, isOpen, onClose, onAp
   useEffect(() => {
     if (task && isOpen) {
       setAssigneeName(task.assignee || '');
-      setDueDate(task.dueDate || task.due_date || new Date().toISOString().split('T')[0]);
+      setDueDate(getInitialDueDate(task));
       setPriority(task.priority || 'Medium');
       setStatusMessage(null);
       setNotes('');
@@ -59,11 +64,13 @@ export default function TaskApprovalModal({ task, meeting, isOpen, onClose, onAp
     setIsSubmitting(true);
     setStatusMessage(null);
 
+    const finalDueDate = dueDate && dueDate.trim() ? dueDate.trim() : 'No Deadline';
+
     const payload = {
       recipient_name: assigneeName.trim(),
       recipient_email: assigneeEmail.trim(),
       task_name: task.task,
-      due_date: dueDate,
+      due_date: finalDueDate,
       due_time: dueTime,
       priority: priority,
       meeting_id: meeting?.id || task.meeting_id || 1,
@@ -80,13 +87,13 @@ export default function TaskApprovalModal({ task, meeting, isOpen, onClose, onAp
         await updateActionItem(task.id, {
           status: 'In Progress',
           assignee: assigneeName.trim(),
-          due_date: dueDate
+          due_date: finalDueDate
         });
       }
 
       setStatusMessage({
         type: 'success',
-        text: `✓ Task Approved! Notification email & MOM report dispatched to ${assigneeEmail}.`
+        text: res?.message ? `✓ ${res.message}` : `✓ Task Approved! Notification email & MOM report dispatched to ${assigneeEmail}.`
       });
 
       setTimeout(() => {
@@ -94,8 +101,8 @@ export default function TaskApprovalModal({ task, meeting, isOpen, onClose, onAp
           onApproved({
             ...task,
             assignee: assigneeName.trim(),
-            dueDate: dueDate,
-            due_date: dueDate,
+            dueDate: finalDueDate,
+            due_date: finalDueDate,
             priority: priority,
             status: 'In Progress'
           });
@@ -257,27 +264,25 @@ export default function TaskApprovalModal({ task, meeting, isOpen, onClose, onAp
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.875rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, marginBottom: '0.375rem' }}>
-                Deadline Date *
+                Deadline Date (Optional)
               </label>
               <input
                 type="date"
                 className="form-input"
                 value={dueDate}
                 onChange={e => setDueDate(e.target.value)}
-                required
               />
             </div>
 
             <div>
               <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, marginBottom: '0.375rem' }}>
-                Deadline Time *
+                Deadline Time (Optional)
               </label>
               <input
                 type="time"
                 className="form-input"
                 value={dueTime}
                 onChange={e => setDueTime(e.target.value)}
-                required
               />
             </div>
 
@@ -295,29 +300,6 @@ export default function TaskApprovalModal({ task, meeting, isOpen, onClose, onAp
                 <option value="Medium">Medium</option>
                 <option value="Low">Low</option>
               </select>
-            </div>
-          </div>
-
-          {/* Calendar Actions Bar */}
-          <div style={{ padding: '0.875rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>📅 Calendar Integration:</span>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                type="button"
-                className="btn btn-outline btn-xs"
-                onClick={handleOpenGoogleCalendar}
-                style={{ fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-              >
-                <ExternalLink className="w-3 h-3 text-primary" /> Google Calendar
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline btn-xs"
-                onClick={handleDownloadIcs}
-                style={{ fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-              >
-                <Download className="w-3 h-3" /> iCal (.ics)
-              </button>
             </div>
           </div>
 

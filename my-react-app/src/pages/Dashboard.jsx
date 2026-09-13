@@ -8,48 +8,112 @@ export default function Dashboard() {
   const [meetings, setMeetings] = useState([]);
   const [actionItems, setActionItems] = useState([]);
 
+  // Get logged in user details from localStorage
+  const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const currentUserName = savedUser.name || 'Amit Shah';
+  const userFirstName = currentUserName.split(' ')[0] || 'Amit';
+
+  const isMyTask = (item) => {
+    if (!item || !item.assignee) return false;
+    const a = String(item.assignee).trim().toLowerCase();
+    if (!a || a === '-' || a === 'null' || a === 'unassigned' || a === 'none' || a === 'not specified') {
+      return false;
+    }
+    const full = currentUserName.toLowerCase();
+    const first = userFirstName.toLowerCase();
+    return a === full || a === first || a.includes(first) || full.includes(a);
+  };
+
+  const getDisplayAssignee = (item) => {
+    if (!item || !item.assignee) return '-';
+    const a = String(item.assignee).trim();
+    if (!a || a === '-' || a.toLowerCase() === 'unassigned' || a.toLowerCase() === 'none' || a.toLowerCase() === 'not specified') {
+      return '-';
+    }
+    if (isMyTask(item)) return currentUserName;
+    return a;
+  };
+
+  // Real-time synchronization: poll every 3 seconds
   useEffect(() => {
-    getMeetings().then(data => {
-      const sorted = [...data].sort((a, b) => {
-        const dateDiff = new Date(b.date || b.meeting_date || 0) - new Date(a.date || a.meeting_date || 0);
-        if (dateDiff !== 0) return dateDiff;
-        return (b.id || 0) - (a.id || 0);
-      });
-      setMeetings(sorted);
-    });
-    getActionItems().then(setActionItems);
+    let isMounted = true;
+    const fetchData = () => {
+      getMeetings().then(data => {
+        if (!isMounted) return;
+        const sorted = [...data].sort((a, b) => {
+          const dateDiff = new Date(b.date || b.meeting_date || 0) - new Date(a.date || a.meeting_date || 0);
+          if (dateDiff !== 0) return dateDiff;
+          return (b.id || 0) - (a.id || 0);
+        });
+        setMeetings(sorted);
+      }).catch(console.error);
+
+      getActionItems().then(data => {
+        if (!isMounted) return;
+        setActionItems(data);
+      }).catch(console.error);
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 3000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
-  const pendingTasks = actionItems.filter(item => item.status !== 'Completed').length;
-  const completedTasks = actionItems.filter(item => item.status === 'Completed').length;
-  const overdueTasks = actionItems.filter(item => {
+  // Filter tasks strictly for the current logged-in user
+  const myTasks = actionItems.filter(isMyTask);
+  const pendingTasks = myTasks.filter(item => item.status !== 'Completed').length;
+  const completedTasks = myTasks.filter(item => item.status === 'Completed').length;
+  const overdueTasks = myTasks.filter(item => {
     const due = item.dueDate || item.due_date;
-    return due && item.status !== 'Completed' && new Date(due) < new Date();
+    return due && due !== 'No Deadline' && due !== 'null' && due !== '-' && item.status !== 'Completed' && new Date(due) < new Date();
   }).length;
 
-  const upcomingDeadlines = actionItems
+  const upcomingDeadlines = myTasks
     .filter(item => item.status !== 'Completed')
-    .sort((a, b) => new Date(a.dueDate || a.due_date) - new Date(b.dueDate || b.due_date))
+    .sort((a, b) => {
+      const dateA = a.dueDate || a.due_date;
+      const dateB = b.dueDate || b.due_date;
+      const validA = dateA && dateA !== 'No Deadline' && dateA !== 'null' && dateA !== '-';
+      const validB = dateB && dateB !== 'No Deadline' && dateB !== 'null' && dateB !== '-';
+      if (validA && !validB) return -1;
+      if (!validA && validB) return 1;
+      if (!validA && !validB) return 0;
+      return new Date(dateA) - new Date(dateB);
+    })
     .slice(0, 4);
+
+  const completionPercentage = myTasks.length > 0 ? Math.round((completedTasks / myTasks.length) * 100) : 0;
 
   return (
     <div className="animate-fadeIn">
       <div className="page-title">
-        <span>Dashboard</span>
-        <button className="btn btn-primary" onClick={() => navigate('/online-meeting')}>
-          <Video className="w-4 h-4" /> Start Online Meeting
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span>Dashboard</span>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.375rem',
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            color: 'var(--success)',
+            background: 'rgba(34, 197, 94, 0.1)',
+            padding: '0.2rem 0.55rem',
+            borderRadius: '12px'
+          }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+            Live Sync
+          </span>
+        </div>
+        <button className="btn btn-primary" onClick={() => navigate('/analyze')}>
+          <Plus className="w-4 h-4" style={{ display: 'none' }} /> Analyze New File
         </button>
       </div>
 
       {/* Action Cards */}
-      <div className="action-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-        <div className="action-card" onClick={() => navigate('/online-meeting')}>
-          <div className="action-card-icon" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
-            <Video className="w-6 h-6" />
-          </div>
-          <span className="action-card-title">Online Meeting</span>
-          <span className="action-card-desc">20-person video conf</span>
-        </div>
+      <div className="action-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         <div className="action-card" onClick={() => navigate('/analyze')}>
           <div className="action-card-icon" style={{ background: 'var(--info-light)', color: 'var(--info)' }}>
             <Upload className="w-6 h-6" />
@@ -76,7 +140,7 @@ export default function Dashboard() {
             <CheckCircle className="w-6 h-6" />
           </div>
           <span className="action-card-title">View Tasks</span>
-          <span className="action-card-desc">{pendingTasks} pending tasks</span>
+          <span className="action-card-desc">{pendingTasks} pending task{pendingTasks !== 1 ? 's' : ''}</span>
         </div>
       </div>
 
@@ -94,7 +158,7 @@ export default function Dashboard() {
             <CheckCircle className="w-5 h-5" />
           </div>
           <span className="stat-title">Total Tasks</span>
-          <span className="stat-value">{actionItems.length}</span>
+          <span className="stat-value">{myTasks.length}</span>
         </div>
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--warning-light)', color: 'var(--warning)' }}>
@@ -113,15 +177,22 @@ export default function Dashboard() {
       </div>
 
       {/* AI Insight Card */}
-      {actionItems.length > 0 && (
+      {myTasks.length > 0 && (
         <div className="insight-card" style={{ marginBottom: '1.5rem' }}>
           <div className="insight-icon"><Zap className="w-5 h-5" /></div>
           <div>
             <div style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.25rem' }}>AI Insight</div>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              You have <strong>{pendingTasks} pending tasks</strong> across {meetings.length} meetings.
+              You have <strong>{pendingTasks} pending task{pendingTasks !== 1 ? 's' : ''}</strong> across {meetings.length} meeting{meetings.length !== 1 ? 's' : ''}.
               {overdueTasks > 0 && <span style={{ color: 'var(--danger)' }}> {overdueTasks} task{overdueTasks > 1 ? 's are' : ' is'} overdue.</span>}
-              {upcomingDeadlines.length > 0 && ` Next deadline: "${upcomingDeadlines[0]?.task}" on ${upcomingDeadlines[0]?.dueDate || upcomingDeadlines[0]?.due_date}.`}
+              {upcomingDeadlines.length > 0 && (
+                (() => {
+                  const d = upcomingDeadlines[0]?.dueDate || upcomingDeadlines[0]?.due_date;
+                  return d && d !== 'No Deadline' && d !== 'null' && d !== '-'
+                    ? ` Next deadline: "${upcomingDeadlines[0]?.task}" on ${d}.`
+                    : ` Next deadline: "${upcomingDeadlines[0]?.task}".`;
+                })()
+              )}
             </div>
           </div>
         </div>
@@ -145,15 +216,15 @@ export default function Dashboard() {
                 fill="none"
                 stroke="#22c55e"
                 strokeWidth="3"
-                strokeDasharray={`${actionItems.length > 0 ? Math.round((completedTasks / actionItems.length) * 100) : 0}, 100`}
+                strokeDasharray={`${completionPercentage}, 100`}
                 strokeLinecap="round"
               />
             </svg>
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>
-              {actionItems.length > 0 ? Math.round((completedTasks / actionItems.length) * 100) : 0}%
+              {completionPercentage}%
             </div>
           </div>
-          <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{completedTasks} of {actionItems.length} completed</div>
+          <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{completedTasks} of {myTasks.length} completed</div>
         </div>
 
         {/* Meeting Activity Mini-Chart */}
@@ -235,14 +306,19 @@ export default function Dashboard() {
             <button className="btn btn-ghost btn-sm" onClick={() => navigate('/tasks')}>View All <ArrowRight className="w-3 h-3" /></button>
           </div>
           {upcomingDeadlines.map(item => (
-            <div key={item.id} style={{ padding: '0.75rem 0', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div key={item.id} style={{ padding: '0.75rem 0', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/tasks')}>
               <div>
                 <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>{item.task}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.assignee}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{getDisplayAssignee(item)}</div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <span className={`badge badge-${item.priority === 'High' ? 'danger' : 'warning'}`}>{item.priority}</span>
-                <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>{item.dueDate || item.due_date}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  {item.dueDate && item.dueDate !== 'No Deadline' && item.dueDate !== 'null' && item.dueDate !== '-'
+                    ? item.dueDate
+                    : item.due_date && item.due_date !== 'No Deadline' && item.due_date !== 'null' && item.due_date !== '-'
+                    ? item.due_date
+                    : 'No Deadline'}
+                </div>
               </div>
             </div>
           ))}
