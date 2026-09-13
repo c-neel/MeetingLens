@@ -133,49 +133,7 @@ export default function Meetings() {
         {/* Action Controls Group */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           
-          {/* View Mode Switcher */}
-          <div style={{ display: 'flex', alignItems: 'center', padding: '0.25rem', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0.5rem', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.04)' }}>
-            <button 
-              onClick={() => setViewMode('grid')}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.375rem', 
-                padding: '0.375rem 0.75rem', 
-                borderRadius: '0.375rem', 
-                fontSize: '0.8125rem', 
-                fontWeight: 600, 
-                border: 'none', 
-                cursor: 'pointer',
-                backgroundColor: viewMode === 'grid' ? '#f1f5f9' : 'transparent',
-                color: viewMode === 'grid' ? '#0f172a' : '#64748b',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <LayoutGrid style={{ width: '15px', height: '15px' }} />
-              <span>Grid</span>
-            </button>
-            <button 
-              onClick={() => setViewMode('list')}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.375rem', 
-                padding: '0.375rem 0.75rem', 
-                borderRadius: '0.375rem', 
-                fontSize: '0.8125rem', 
-                fontWeight: 600, 
-                border: 'none', 
-                cursor: 'pointer',
-                backgroundColor: viewMode === 'list' ? '#f1f5f9' : 'transparent',
-                color: viewMode === 'list' ? '#0f172a' : '#64748b',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <List style={{ width: '15px', height: '15px' }} />
-              <span>List</span>
-            </button>
-          </div>
+
 
           {/* Export Dropdown */}
           <div style={{ position: 'relative' }}>
@@ -318,27 +276,7 @@ export default function Meetings() {
               Uploaded ({uploadMeetingsCount})
             </button>
           </div>
-
-          {/* Date Filter Dropdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <button style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.45rem 0.75rem', borderRadius: '0.5rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', cursor: 'pointer' }}>
-              <Calendar style={{ width: '14px', height: '14px', color: '#64748b' }} />
-              <span>Last 30 days</span>
-              <ChevronDown style={{ width: '14px', height: '14px', color: '#94a3b8' }} />
-            </button>
-          </div>
-
         </div>
-
-        {/* Sort Row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingTop: '0.5rem', borderTop: '1px solid #f1f5f9', fontSize: '0.75rem', color: '#64748b' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', cursor: 'pointer' }}>
-            <span>Sort:</span>
-            <strong style={{ color: '#0f172a', fontWeight: 700 }}>Most Recent</strong>
-            <ArrowUpDown style={{ width: '13px', height: '13px', color: '#4f46e5' }} />
-          </div>
-        </div>
-
       </div>
 
       {/* SECTION: PINNED HIGH-IMPACT SESSIONS (2 Executive Cards) */}
@@ -376,10 +314,6 @@ export default function Meetings() {
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.125rem 0.625rem', borderRadius: '9999px', backgroundColor: index === 0 ? '#e0e7ff' : '#f1f5f9', color: index === 0 ? '#4338ca' : '#334155', fontSize: '0.75rem', fontWeight: 700 }}>
                           {meeting.source === 'voice' ? <Mic style={{ width: '13px', height: '13px' }} /> : <Video style={{ width: '13px', height: '13px' }} />}
                           {meeting.source === 'voice' ? 'Live Audio' : 'Recorded Meeting'}
-                        </span>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.125rem 0.5rem', borderRadius: '9999px', backgroundColor: '#f1f5f9', color: '#334155', fontSize: '0.6875rem', fontWeight: 600 }}>
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-                          Completed
                         </span>
                         <span style={{ padding: '0.125rem 0.5rem', borderRadius: '0.25rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', fontSize: '0.6875rem', fontFamily: 'monospace', color: '#64748b' }}>
                           S{44 - index}-KICKOFF
@@ -494,21 +428,7 @@ export default function Meetings() {
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.75rem', color: '#64748b' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', cursor: 'pointer' }}>
-              <input 
-                type="checkbox" 
-                checked={selectedIds.length > 0 && selectedIds.length === filteredMeetings.length} 
-                onChange={toggleSelectAll}
-                style={{ borderRadius: '0.25rem', cursor: 'pointer' }} 
-              />
-              <span>Select multiple for batch export</span>
-            </label>
-            <span style={{ color: '#e2e8f0' }}>|</span>
-            <button style={{ color: '#4f46e5', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>
-              Custom View
-            </button>
-          </div>
+
         </div>
 
         {/* Loading State */}
@@ -555,12 +475,6 @@ export default function Meetings() {
                     {/* Card Header Strip */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <input 
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) => toggleSelectMeeting(e, meeting.id)}
-                          style={{ borderRadius: '0.25rem', cursor: 'pointer' }}
-                        />
                         {isVoice && (
                           <span style={{ 
                             display: 'inline-flex', 
@@ -577,10 +491,6 @@ export default function Meetings() {
                             Live Voice
                           </span>
                         )}
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.6875rem', fontWeight: 600, color: '#059669' }}>
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-                          Completed
-                        </span>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -676,14 +586,6 @@ export default function Meetings() {
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.8125rem', color: '#64748b' }}>
           <span>Showing <strong style={{ color: '#0f172a' }}>{startIdx}–{endIdx}</strong> of <strong style={{ color: '#0f172a' }}>{filteredMeetings.length}</strong> recorded meetings</span>
-          <span>•</span>
-          <button onClick={toggleSelectAll} style={{ color: '#4f46e5', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>
-            {selectedIds.length === filteredMeetings.length ? 'Deselect All' : 'Select All Visible'}
-          </button>
-          <span>•</span>
-          <button style={{ color: '#475569', background: 'none', border: 'none', cursor: 'pointer' }}>
-            Batch Export (.zip)
-          </button>
         </div>
 
         {/* Pagination Controls */}
