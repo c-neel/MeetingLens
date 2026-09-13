@@ -7,6 +7,7 @@ import {
   Video, FileText, CheckCircle2, AlertCircle, Eye, ShieldCheck, ChevronDown
 } from 'lucide-react';
 import { getMeetings } from '../services/api';
+import { exportAsPDF } from '../utils/exporter';
 
 export default function Meetings() {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ export default function Meetings() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 8;
+  const ITEMS_PER_PAGE = 6;
 
   useEffect(() => {
     getMeetings().then(data => {
@@ -372,9 +373,9 @@ export default function Meetings() {
                     {/* Header Bar with Status, Type, and Pin */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.125rem 0.625rem', borderRadius: '9999px', backgroundColor: index === 0 ? '#e0e7ff' : '#fee2e2', color: index === 0 ? '#4338ca' : '#dc2626', fontSize: '0.75rem', fontWeight: 700 }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.125rem 0.625rem', borderRadius: '9999px', backgroundColor: index === 0 ? '#e0e7ff' : '#f1f5f9', color: index === 0 ? '#4338ca' : '#334155', fontSize: '0.75rem', fontWeight: 700 }}>
                           {meeting.source === 'voice' ? <Mic style={{ width: '13px', height: '13px' }} /> : <Video style={{ width: '13px', height: '13px' }} />}
-                          {meeting.source === 'voice' ? 'Live Audio Session' : 'Zoom Sync'}
+                          {meeting.source === 'voice' ? 'Live Audio' : 'Recorded Meeting'}
                         </span>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.125rem 0.5rem', borderRadius: '9999px', backgroundColor: '#f1f5f9', color: '#334155', fontSize: '0.6875rem', fontWeight: 600 }}>
                           <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
@@ -461,17 +462,12 @@ export default function Meetings() {
                     </button>
 
                     <button 
-                      title="Download Notes"
-                      style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', color: '#64748b', cursor: 'pointer' }}
+                      title="Download PDF"
+                      onClick={(e) => { e.stopPropagation(); exportAsPDF(meeting); }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.5rem 0.875rem', borderRadius: '0.5rem', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', color: '#4f46e5', fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer' }}
                     >
                       <Download style={{ width: '16px', height: '16px' }} />
-                    </button>
-
-                    <button 
-                      title="Share"
-                      style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', color: '#64748b', cursor: 'pointer' }}
-                    >
-                      <Share2 style={{ width: '16px', height: '16px' }} />
+                      <span>Download PDF</span>
                     </button>
                   </div>
 
@@ -565,20 +561,22 @@ export default function Meetings() {
                           onChange={(e) => toggleSelectMeeting(e, meeting.id)}
                           style={{ borderRadius: '0.25rem', cursor: 'pointer' }}
                         />
-                        <span style={{ 
-                          display: 'inline-flex', 
-                          alignItems: 'center', 
-                          gap: '0.25rem', 
-                          padding: '0.125rem 0.5rem', 
-                          borderRadius: '9999px', 
-                          fontSize: '0.7rem', 
-                          fontWeight: 700, 
-                          backgroundColor: isVoice ? '#fee2e2' : '#e0e7ff', 
-                          color: isVoice ? '#dc2626' : '#4f46e5' 
-                        }}>
-                          {isVoice ? <Mic style={{ width: '12px', height: '12px' }} /> : <Video style={{ width: '12px', height: '12px' }} />}
-                          {isVoice ? 'Live Voice' : 'Google Meet'}
-                        </span>
+                        {isVoice && (
+                          <span style={{ 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: '0.25rem', 
+                            padding: '0.125rem 0.5rem', 
+                            borderRadius: '9999px', 
+                            fontSize: '0.7rem', 
+                            fontWeight: 700, 
+                            backgroundColor: '#fee2e2', 
+                            color: '#dc2626' 
+                          }}>
+                            <Mic style={{ width: '12px', height: '12px' }} />
+                            Live Voice
+                          </span>
+                        )}
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.6875rem', fontWeight: 600, color: '#059669' }}>
                           <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
                           Completed
@@ -639,11 +637,31 @@ export default function Meetings() {
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       View Details <ArrowRight style={{ width: '14px', height: '14px' }} />
                     </span>
-                    {meeting.quality_score && (
-                      <span style={{ color: '#059669', backgroundColor: '#d1fae5', padding: '0.1rem 0.4rem', borderRadius: '9999px', fontSize: '0.6875rem' }}>
-                        {meeting.quality_score}/100 Quality
-                      </span>
-                    )}
+                    <button 
+                      title="Download PDF"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        exportAsPDF(meeting);
+                      }}
+                      style={{ 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: '0.25rem', 
+                        padding: '0.25rem 0.5rem', 
+                        borderRadius: '0.375rem', 
+                        backgroundColor: '#ffffff', 
+                        border: '1px solid #e2e8f0', 
+                        color: '#4f46e5', 
+                        fontSize: '0.75rem', 
+                        fontWeight: 600, 
+                        cursor: 'pointer' 
+                      }}
+                      onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#e0e7ff'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; }}
+                    >
+                      <Download style={{ width: '13px', height: '13px' }} />
+                      <span>Download PDF</span>
+                    </button>
                   </div>
                 </div>
               );

@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Upload, Mic, Video, Calendar, CheckSquare, CheckCircle, 
-  Clock, Zap, ArrowRight, TrendingUp, AlertTriangle, ChevronRight, FileText
+  Clock, Zap, ArrowRight, TrendingUp, AlertTriangle, ChevronRight, FileText, Download
 } from 'lucide-react';
 import { getMeetings, getActionItems } from '../services/api';
+import { exportAsPDF } from '../utils/exporter';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -534,9 +535,31 @@ export default function Dashboard() {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.125rem 0.5rem', borderRadius: '9999px', backgroundColor: '#d1fae5', color: '#047857' }}>
-                    {meeting.quality_score || (90 + (index % 10))}/100 Quality
-                  </span>
+                  <button 
+                    title="Download PDF"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      exportAsPDF(meeting);
+                    }}
+                    style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: '0.25rem', 
+                      padding: '0.25rem 0.5rem', 
+                      borderRadius: '0.375rem', 
+                      backgroundColor: '#ffffff', 
+                      border: '1px solid #e2e8f0', 
+                      color: '#4f46e5', 
+                      fontSize: '0.75rem', 
+                      fontWeight: 600, 
+                      cursor: 'pointer' 
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#e0e7ff'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; }}
+                  >
+                    <Download style={{ width: '13px', height: '13px' }} />
+                    <span>Download PDF</span>
+                  </button>
                   <ChevronRight style={{ width: '16px', height: '16px', color: '#94a3b8' }} />
                 </div>
               </div>
