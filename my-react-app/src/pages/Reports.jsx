@@ -6,7 +6,7 @@ import {
   ArrowDownToLine, 
   RefreshCw, 
   AlertCircle, 
-  Sparkles,
+  Zap,
   TrendingUp,
   Clock,
   CheckCircle2,
@@ -502,7 +502,7 @@ export default function Reports() {
             disabled={loading}
             style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', height: '32px' }}
           >
-            {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+            {loading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
             <span>Generate</span>
           </button>
         </form>

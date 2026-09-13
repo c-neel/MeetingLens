@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { X, Mail, Calendar, CheckCircle, Clock, User, AlertCircle, Sparkles, Send, ExternalLink, ArrowLeft } from 'lucide-react';
+import { X, Mail, Calendar, CheckCircle, Clock, User, AlertCircle, Zap, Send, ExternalLink, ArrowLeft } from 'lucide-react';
 import { buildGoogleCalendarUrl } from '../utils/calendar';
 import { sendTaskEmailNotification, updateActionItem, getActionItems, getMeetings } from '../services/api';
 
@@ -211,7 +211,7 @@ export default function TaskApproval() {
 
       setStatusMessage({
         type: 'success',
-        text: res?.message ? `✓ ${res.message}` : `✓ Task Delegated! Notification email dispatched to ${assigneeEmail}. Returning to review...`
+        text: res?.message ? `${res.message}` : `Task Delegated! Notification email dispatched to ${assigneeEmail}. Returning to review...`
       });
 
       setTimeout(() => {

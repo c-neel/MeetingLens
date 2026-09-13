@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Video, Mic, MicOff, VideoOff, Monitor, MessageSquare, Users, PhoneOff, Copy, Check, Sparkles, AlertCircle, Loader2, Play, Square } from 'lucide-react';
+import { Video, Mic, MicOff, VideoOff, Monitor, MessageSquare, Users, PhoneOff, Copy, Check, Zap, AlertCircle, Loader2, Play, Square } from 'lucide-react';
 import { processTranscript, saveMeeting } from '../services/api';
 
 export default function OnlineMeeting() {
@@ -246,7 +246,7 @@ export default function OnlineMeeting() {
                   onClick={generateRoomName}
                   style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
                 >
-                  ⚡ Generate Room Code
+                  Generate Room Code
                 </button>
               </div>
               <input
@@ -326,13 +326,13 @@ export default function OnlineMeeting() {
               }}>
                 {transcript || (
                   <span style={{ color: 'var(--text-muted)', italic: 'true' }}>
-                    🎤 Audio recording active. Speak into your microphone to generate live transcript...
+                    Audio recording active. Speak into your microphone to generate live transcript...
                   </span>
                 )}
               </div>
 
               <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                💡 When you click <strong>Leave Meeting</strong>, AI will automatically analyze this transcript to generate Minutes of Meeting & Action Items.
+                When you click <strong>Leave Meeting</strong>, AI will automatically analyze this transcript to generate Minutes of Meeting & Action Items.
               </div>
             </div>
           </div>
@@ -356,7 +356,7 @@ export default function OnlineMeeting() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
             <div>
               <span className="badge badge-success" style={{ fontSize: '0.75rem', marginBottom: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                <Sparkles className="w-3.5 h-3.5" /> Online Meeting AI Analysis
+                Online Meeting AI Analysis
               </span>
               <h2 style={{ fontSize: '1.35rem', fontWeight: 700, margin: 0 }}>{meetingTitle || roomName}</h2>
             </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { UploadCloud, FileText, Loader2, Save, Check, X, Edit2, ShieldAlert, Sparkles, CheckCircle2, AlertTriangle, XCircle, User, UserCheck, ArrowLeft, RefreshCw, Calendar, Clock } from 'lucide-react';
+import { UploadCloud, FileText, Loader2, Save, Check, X, Edit2, ShieldAlert, Zap, CheckCircle2, AlertTriangle, XCircle, User, UserCheck, ArrowLeft, RefreshCw, Calendar, Clock } from 'lucide-react';
 import { processTranscript, saveMeeting, getMeetingById } from '../services/api';
 
 export default function NewMeeting() {
@@ -384,14 +384,14 @@ export default function NewMeeting() {
   // Helper to get user-friendly error title
   const getErrorTitle = (error) => {
     const type = error?.error_type || '';
-    if (type === 'BACKEND_UNREACHABLE') return '🔌 Backend Server Not Running';
-    if (type.startsWith('API_KEY')) return '🔑 API Key Problem';
-    if (type.includes('401') || type.includes('403')) return '🔑 API Key Authentication Failed';
-    if (type.includes('404')) return '⚠️ Gemini Model Not Found';
-    if (type.includes('429')) return '⏳ Rate Limit Exceeded';
-    if (type.includes('500') || type.includes('503')) return '🌐 Gemini Service Unavailable';
-    if (type === 'INVALID_JSON') return '⚠️ AI Response Parse Error';
-    return '❌ AI Analysis Failed';
+    if (type === 'BACKEND_UNREACHABLE') return 'Backend Server Not Running';
+    if (type.startsWith('API_KEY')) return 'API Key Problem';
+    if (type.includes('401') || type.includes('403')) return 'API Key Authentication Failed';
+    if (type.includes('404')) return 'Gemini Model Not Found';
+    if (type.includes('429')) return 'Rate Limit Exceeded';
+    if (type.includes('500') || type.includes('503')) return 'Gemini Service Unavailable';
+    if (type === 'INVALID_JSON') return 'AI Response Parse Error';
+    return 'AI Analysis Failed';
   };
 
   return (
@@ -449,7 +449,7 @@ export default function NewMeeting() {
           </div>
 
           <button className="btn btn-primary btn-lg" style={{ width: '100%' }} onClick={handleUpload}>
-            <Sparkles className="w-5 h-5" /> Analyze Content
+            Analyze Content
           </button>
         </div>
       )}
@@ -524,7 +524,7 @@ export default function NewMeeting() {
                 }
               }}
             >
-              🔄 Retry Analysis
+              Retry Analysis
             </button>
             <button className="btn btn-outline" onClick={() => { setAnalysisError(null); setResults(null); }}>
               ← Go Back
@@ -546,7 +546,7 @@ export default function NewMeeting() {
                     <span className="badge badge-warning">{results.risks.length} Risks Detected</span>
                   )}
                   {results.ai_powered && (
-                    <span className="badge badge-success" style={{ background: '#dcfce7', color: '#166534' }}>✓ AI Powered ({results.model || 'Gemini'})</span>
+                    <span className="badge badge-success" style={{ background: '#dcfce7', color: '#166534' }}>AI Powered ({results.model || 'Gemini'})</span>
                   )}
                 </div>
               </div>
@@ -745,11 +745,11 @@ export default function NewMeeting() {
 
               <div>
                 <h3 style={{ fontSize: '1rem', color: 'var(--primary)', fontWeight: 600, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Sparkles className="w-4 h-4" /> AI Recommendations
+                  AI Recommendations
                 </h3>
                 {results.suggestions && results.suggestions.length > 0 ? results.suggestions.map((sug, i) => (
                   <div key={i} style={{ padding: '0.625rem', background: '#f0f5ff', borderRadius: '0.375rem', marginBottom: '0.5rem', border: '1px solid #d6e4ff', fontSize: '0.8125rem' }}>
-                    💡 {sug.text}
+                    {sug.text}
                   </div>
                 )) : (
                   <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>No recommendations.</p>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { getMeetingById, getDocuments, uploadDocument, deleteDocument } from '../services/api';
-import { ArrowLeft, Save, FileDown, Mail, Edit2, ShieldAlert, Sparkles, CheckCircle2, Clock, Calendar, FileText, AlertTriangle, ChevronDown, Paperclip, Plus, Download, Trash2, Upload, X, AlertCircle, CheckCircle, Send } from 'lucide-react';
+import { ArrowLeft, Save, FileDown, Mail, Edit2, ShieldAlert, Zap, CheckCircle2, Clock, Calendar, FileText, AlertTriangle, ChevronDown, Paperclip, Plus, Download, Trash2, Upload, X, AlertCircle, CheckCircle, Send } from 'lucide-react';
 import { exportAsPDF, exportAsWord, downloadDocumentFile } from '../utils/exporter';
 import MeetingAIChat from '../components/MeetingAIChat';
 

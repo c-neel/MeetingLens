@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Mail, Calendar, Download, CheckCircle, Clock, User, AlertCircle, Sparkles, Send, ExternalLink } from 'lucide-react';
+import { X, Mail, Calendar, Download, CheckCircle, Clock, User, AlertCircle, Zap, Send, ExternalLink } from 'lucide-react';
 import { buildGoogleCalendarUrl, downloadIcsFile } from '../utils/calendar';
 import { sendTaskEmailNotification, updateActionItem } from '../services/api';
 
@@ -93,7 +93,7 @@ export default function TaskApprovalModal({ task, meeting, isOpen, onClose, onAp
 
       setStatusMessage({
         type: 'success',
-        text: res?.message ? `✓ ${res.message}` : `✓ Task Approved! Notification email & MOM report dispatched to ${assigneeEmail}.`
+        text: res?.message ? `${res.message}` : `Task Approved! Notification email & MOM report dispatched to ${assigneeEmail}.`
       });
 
       setTimeout(() => {
@@ -223,7 +223,7 @@ export default function TaskApprovalModal({ task, meeting, isOpen, onClose, onAp
                     fontWeight: assigneeName === m.name ? 600 : 400
                   }}
                 >
-                  👤 {m.name}
+                  {m.name}
                 </button>
               ))}
             </div>

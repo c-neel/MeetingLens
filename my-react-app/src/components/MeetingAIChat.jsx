@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, Send, Copy, Check, Bot, User, RefreshCw } from 'lucide-react';
+import { Send, Copy, Check, Bot, User, RefreshCw } from 'lucide-react';
 import { sendMeetingChatMessage } from '../services/api';
 
 export default function MeetingAIChat({ meeting }) {
@@ -64,11 +64,11 @@ export default function MeetingAIChat({ meeting }) {
   };
 
   const quickPrompts = [
-    "💡 What were the key decisions?",
-    "📩 Draft a follow-up email to participants",
-    "⚠️ What are the top risks & blockers?",
-    "📋 Summarize all action items and assignees",
-    "🚀 Give 3 recommendations for next sprint"
+    "What were the key decisions?",
+    "Draft a follow-up email to participants",
+    "What are the top risks & blockers?",
+    "Summarize all action items and assignees",
+    "Give 3 recommendations for next sprint"
   ];
 
   return (
@@ -77,7 +77,7 @@ export default function MeetingAIChat({ meeting }) {
       <div style={{ padding: '1rem 1.25rem', background: '#0f172a', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Sparkles className="w-4 h-4 text-white" />
+            <Bot className="w-4 h-4 text-white" />
           </div>
           <div>
             <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>AI Meeting Copilot</div>

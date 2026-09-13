@@ -12,7 +12,7 @@ import {
   Save, 
   Loader2, 
   X,
-  Sparkles,
+  Zap,
   RefreshCw
 } from 'lucide-react';
 import { updateUserProfile, clearAllMeetings } from '../services/api';

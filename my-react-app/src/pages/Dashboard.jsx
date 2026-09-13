@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Upload, Mic, Video, Calendar, CheckCircle, Clock, AlertCircle, Zap, ArrowRight } from 'lucide-react';
+import { 
+  Plus, Upload, Mic, Video, Calendar, CheckSquare, CheckCircle, 
+  Clock, Zap, ArrowRight, TrendingUp, AlertTriangle, ChevronRight, FileText
+} from 'lucide-react';
 import { getMeetings, getActionItems } from '../services/api';
 
 export default function Dashboard() {
@@ -86,247 +89,551 @@ export default function Dashboard() {
     .slice(0, 4);
 
   const completionPercentage = myTasks.length > 0 ? Math.round((completedTasks / myTasks.length) * 100) : 0;
+  const inProgressTasks = Math.max(0, pendingTasks - overdueTasks);
 
   return (
-    <div className="animate-fadeIn">
-      <div className="page-title">
+    <div className="animate-fadeIn" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      
+      {/* Dashboard Top Header Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.025em', fontFamily: 'var(--font-display)' }}>
+              Dashboard
+            </h1>
+            <span style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '0.375rem', 
+              fontSize: '0.75rem', 
+              fontWeight: 700, 
+              color: '#15803d', 
+              backgroundColor: '#f0fdf4', 
+              border: '1px solid #bbf7d0',
+              padding: '0.2rem 0.625rem', 
+              borderRadius: '9999px' 
+            }}>
+              <span className="live-pulse-green" />
+              Live Sync
+            </span>
+          </div>
+          <p style={{ fontSize: '0.8125rem', color: '#64748b', marginTop: '0.25rem' }}>
+            Welcome back, <strong style={{ color: '#334155' }}>{currentUserName}</strong>. Here is your team's real-time meeting intelligence.
+          </p>
+        </div>
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span>Dashboard</span>
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.375rem',
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            color: 'var(--success)',
-            background: 'rgba(34, 197, 94, 0.1)',
-            padding: '0.2rem 0.55rem',
-            borderRadius: '12px'
-          }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
-            Live Sync
-          </span>
-        </div>
-        <button className="btn btn-primary" onClick={() => navigate('/analyze')}>
-          <Plus className="w-4 h-4" style={{ display: 'none' }} /> Analyze New File
-        </button>
-      </div>
-
-      {/* Action Cards */}
-      <div className="action-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-        <div className="action-card" onClick={() => navigate('/analyze')}>
-          <div className="action-card-icon" style={{ background: 'var(--info-light)', color: 'var(--info)' }}>
-            <Upload className="w-6 h-6" />
-          </div>
-          <span className="action-card-title">Upload File</span>
-          <span className="action-card-desc">Analyze transcript</span>
-        </div>
-        <div className="action-card" onClick={() => navigate('/voice-meeting')}>
-          <div className="action-card-icon" style={{ background: 'var(--danger-light)', color: 'var(--danger)' }}>
-            <Mic className="w-6 h-6" />
-          </div>
-          <span className="action-card-title">Voice Meeting</span>
-          <span className="action-card-desc">Record live meeting</span>
-        </div>
-        <div className="action-card" onClick={() => navigate('/meetings')}>
-          <div className="action-card-icon" style={{ background: 'var(--info-light)', color: 'var(--info)' }}>
-            <Calendar className="w-6 h-6" />
-          </div>
-          <span className="action-card-title">View Meetings</span>
-          <span className="action-card-desc">{meetings.length} total meetings</span>
-        </div>
-        <div className="action-card" onClick={() => navigate('/tasks')}>
-          <div className="action-card-icon" style={{ background: 'var(--success-light)', color: 'var(--success)' }}>
-            <CheckCircle className="w-6 h-6" />
-          </div>
-          <span className="action-card-title">View Tasks</span>
-          <span className="action-card-desc">{pendingTasks} pending task{pendingTasks !== 1 ? 's' : ''}</span>
+          <button 
+            onClick={() => navigate('/online-meeting')}
+            style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              padding: '0.5rem 0.875rem', 
+              borderRadius: '0.5rem', 
+              fontSize: '0.8125rem', 
+              fontWeight: 600, 
+              color: '#334155', 
+              backgroundColor: '#ffffff', 
+              border: '1px solid #e2e8f0', 
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)'
+            }}
+          >
+            <Video style={{ width: '16px', height: '16px', color: '#64748b' }} />
+            <span>Schedule Online Meeting</span>
+          </button>
+          <button 
+            onClick={() => navigate('/analyze')}
+            style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              padding: '0.5rem 1rem', 
+              borderRadius: '0.5rem', 
+              fontSize: '0.8125rem', 
+              fontWeight: 600, 
+              color: '#ffffff', 
+              backgroundColor: '#4f46e5', 
+              border: 'none', 
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px 0 rgba(79, 70, 229, 0.25)'
+            }}
+          >
+            <Plus style={{ width: '16px', height: '16px' }} />
+            <span>Analyze New File</span>
+          </button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
-            <Calendar className="w-5 h-5" />
-          </div>
-          <span className="stat-title">Total Meetings</span>
-          <span className="stat-value">{meetings.length}</span>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'var(--info-light)', color: 'var(--info)' }}>
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <span className="stat-title">Total Tasks</span>
-          <span className="stat-value">{myTasks.length}</span>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'var(--warning-light)', color: 'var(--warning)' }}>
-            <Clock className="w-5 h-5" />
-          </div>
-          <span className="stat-title">Pending Tasks</span>
-          <span className="stat-value">{pendingTasks}</span>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'var(--success-light)', color: 'var(--success)' }}>
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <span className="stat-title">Completed</span>
-          <span className="stat-value">{completedTasks}</span>
-        </div>
-      </div>
-
-      {/* AI Insight Card */}
-      {myTasks.length > 0 && (
-        <div className="insight-card" style={{ marginBottom: '1.5rem' }}>
-          <div className="insight-icon"><Zap className="w-5 h-5" /></div>
+      {/* Action Cards Row (4 Columns) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+        
+        {/* Upload File */}
+        <div className="dash-action-card-v2" onClick={() => navigate('/analyze')}>
           <div>
-            <div style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.25rem' }}>AI Insight</div>
-            <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              You have <strong>{pendingTasks} pending task{pendingTasks !== 1 ? 's' : ''}</strong> across {meetings.length} meeting{meetings.length !== 1 ? 's' : ''}.
-              {overdueTasks > 0 && <span style={{ color: 'var(--danger)' }}> {overdueTasks} task{overdueTasks > 1 ? 's are' : ' is'} overdue.</span>}
-              {upcomingDeadlines.length > 0 && (
-                (() => {
-                  const d = upcomingDeadlines[0]?.dueDate || upcomingDeadlines[0]?.due_date;
-                  return d && d !== 'No Deadline' && d !== 'null' && d !== '-'
-                    ? ` Next deadline: "${upcomingDeadlines[0]?.task}" on ${d}.`
-                    : ` Next deadline: "${upcomingDeadlines[0]?.task}".`;
-                })()
-              )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '0.5rem', backgroundColor: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Upload style={{ width: '20px', height: '20px' }} />
+              </div>
+              <span className="shortcut-badge">⌘U</span>
             </div>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#0f172a' }}>Upload File</h3>
+            <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.125rem' }}>Analyze meeting transcript</p>
+          </div>
+          <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4f46e5' }}>Start Upload</span>
+            <ArrowRight className="action-card-arrow" style={{ width: '16px', height: '16px', color: '#4f46e5' }} />
           </div>
         </div>
-      )}
 
-      {/* Productivity Analytics Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-        {/* Task Completion Gauge */}
-        <div className="card" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Task Completion</div>
-          <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto' }}>
-            <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%' }}>
-              <path
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke="#e2e8f0"
-                strokeWidth="3"
-              />
-              <path
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke="#22c55e"
-                strokeWidth="3"
-                strokeDasharray={`${completionPercentage}, 100`}
-                strokeLinecap="round"
-              />
-            </svg>
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>
-              {completionPercentage}%
+        {/* Voice Meeting */}
+        <div className="dash-action-card-v2" onClick={() => navigate('/voice-meeting')}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '0.5rem', backgroundColor: '#fee2e2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Mic style={{ width: '20px', height: '20px' }} />
+              </div>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.125rem 0.5rem', borderRadius: '9999px', fontSize: '0.65rem', fontWeight: 700, backgroundColor: '#fee2e2', color: '#dc2626' }}>
+                <span className="live-pulse-red" />
+                LIVE
+              </span>
             </div>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#0f172a' }}>Voice Meeting</h3>
+            <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.125rem' }}>Record live meeting</p>
           </div>
-          <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{completedTasks} of {myTasks.length} completed</div>
+          <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#ef4444' }}>Record Now</span>
+            <ArrowRight className="action-card-arrow" style={{ width: '16px', height: '16px', color: '#ef4444' }} />
+          </div>
         </div>
 
-        {/* Meeting Activity Mini-Chart */}
-        <div className="card">
-          <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Weekly Meeting Activity</div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.375rem', height: '80px', justifyContent: 'center' }}>
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => {
-              const dayMeetings = Math.max(0, Math.min(meetings.length, Math.floor(Math.random() * 3)));
-              const height = dayMeetings > 0 ? 20 + dayMeetings * 20 : 8;
+        {/* View Meetings */}
+        <div className="dash-action-card-v2" onClick={() => navigate('/meetings')}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '0.5rem', backgroundColor: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Calendar style={{ width: '20px', height: '20px' }} />
+              </div>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.125rem 0.5rem', borderRadius: '9999px', backgroundColor: '#f1f5f9', color: '#475569' }}>
+                {meetings.length} Total
+              </span>
+            </div>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#0f172a' }}>View Meetings</h3>
+            <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.125rem' }}>{meetings.length} recorded sessions</p>
+          </div>
+          <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#2563eb' }}>Browse History</span>
+            <ArrowRight className="action-card-arrow" style={{ width: '16px', height: '16px', color: '#2563eb' }} />
+          </div>
+        </div>
+
+        {/* View Tasks */}
+        <div className="dash-action-card-v2" onClick={() => navigate('/tasks')}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '0.5rem', backgroundColor: '#d1fae5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CheckSquare style={{ width: '20px', height: '20px' }} />
+              </div>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.125rem 0.5rem', borderRadius: '9999px', backgroundColor: '#fef3c7', color: '#b45309' }}>
+                {pendingTasks} Pending
+              </span>
+            </div>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#0f172a' }}>View Tasks</h3>
+            <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.125rem' }}>Action items assigned to you</p>
+          </div>
+          <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#059669' }}>Manage Tasks</span>
+            <ArrowRight className="action-card-arrow" style={{ width: '16px', height: '16px', color: '#059669' }} />
+          </div>
+        </div>
+
+      </div>
+
+      {/* Metrics Row (4 Columns matching reference design) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+        
+        {/* Total Meetings Metric */}
+        <div className="dash-metric-card-v2">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Meetings</span>
+            <div style={{ width: '32px', height: '32px', borderRadius: '0.375rem', backgroundColor: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Calendar style={{ width: '16px', height: '16px' }} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
+            <span className="num-mono" style={{ fontSize: '1.75rem', color: '#0f172a' }}>{meetings.length}</span>
+            <span className="badge-trend-up">
+              <TrendingUp style={{ width: '12px', height: '12px' }} />
+              +12.5%
+            </span>
+          </div>
+          <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem' }}>Avg {(meetings.length / 4 || 3.5).toFixed(1)} meetings/week</p>
+        </div>
+
+        {/* Tasks Extracted Metric */}
+        <div className="dash-metric-card-v2">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tasks Extracted</span>
+            <div style={{ width: '32px', height: '32px', borderRadius: '0.375rem', backgroundColor: '#d1fae5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CheckCircle style={{ width: '16px', height: '16px' }} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
+            <span className="num-mono" style={{ fontSize: '1.75rem', color: '#0f172a' }}>{myTasks.length}</span>
+            <span className="badge-trend-up">
+              <TrendingUp style={{ width: '12px', height: '12px' }} />
+              +18%
+            </span>
+          </div>
+          <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem' }}>{completedTasks} tasks completed</p>
+        </div>
+
+        {/* Pending Tasks Metric */}
+        <div className="dash-metric-card-v2">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pending Tasks</span>
+            <div style={{ width: '32px', height: '32px', borderRadius: '0.375rem', backgroundColor: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Clock style={{ width: '16px', height: '16px' }} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
+            <span className="num-mono" style={{ fontSize: '1.75rem', color: '#0f172a' }}>{pendingTasks}</span>
+            {overdueTasks > 0 ? (
+              <span className="badge-trend-rose">
+                <AlertTriangle style={{ width: '12px', height: '12px' }} />
+                {overdueTasks} Overdue
+              </span>
+            ) : (
+              <span className="badge-trend-amber">
+                On Track
+              </span>
+            )}
+          </div>
+          <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem' }}>Requires your review</p>
+        </div>
+
+        {/* Completion Rate Metric */}
+        <div className="dash-metric-card-v2">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Completion Rate</span>
+            <div style={{ width: '32px', height: '32px', borderRadius: '0.375rem', backgroundColor: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CheckSquare style={{ width: '16px', height: '16px' }} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
+            <span className="num-mono" style={{ fontSize: '1.75rem', color: '#0f172a' }}>{completionPercentage}%</span>
+            <span className="badge-trend-up">
+              <TrendingUp style={{ width: '12px', height: '12px' }} />
+              +4%
+            </span>
+          </div>
+          <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem' }}>{completedTasks} of {myTasks.length} total tasks</p>
+        </div>
+
+      </div>
+
+      {/* Analytics Grid (Task Completion Velocity Donut + Weekly Cadence Bar Chart) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>
+        
+        {/* Task Completion Velocity (Donut Chart Card) */}
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0.75rem', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Task Completion Velocity</h3>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.125rem' }}>Distribution across status & team</p>
+              </div>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.625rem', borderRadius: '9999px', backgroundColor: '#f1f5f9', color: '#475569' }}>
+                Real-time
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', margin: '1rem 0', flexWrap: 'wrap', gap: '1.5rem' }}>
+              {/* SVG Donut Chart */}
+              <div style={{ position: 'relative', width: '140px', height: '140px' }}>
+                <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="#e2e8f0"
+                    strokeWidth="3.8"
+                  />
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth="3.8"
+                    strokeDasharray={`${completionPercentage}, 100`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.375rem', fontWeight: 800, color: '#0f172a', fontFamily: 'var(--font-display)', lineHeight: 1 }}>
+                    {completionPercentage}%
+                  </div>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#64748b', uppercase: 'uppercase', letterSpacing: '0.05em', marginTop: '0.2rem' }}>
+                    Completed
+                  </div>
+                </div>
+              </div>
+
+              {/* Legend List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', minWidth: '140px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#334155' }}>Completed</span>
+                  </div>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#0f172a' }}>{completedTasks}</span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#4f46e5' }} />
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#334155' }}>In Progress</span>
+                  </div>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#0f172a' }}>{inProgressTasks}</span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f59e0b' }} />
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#334155' }}>Overdue</span>
+                  </div>
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: overdueTasks > 0 ? '#ef4444' : '#0f172a' }}>{overdueTasks}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '0.875rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: '#64748b' }}>
+            <span>Target: 85% weekly clear rate</span>
+            <button onClick={() => navigate('/tasks')} style={{ color: '#4f46e5', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>View Breakdown →</button>
+          </div>
+        </div>
+
+        {/* Weekly Cadence Bar Chart Card */}
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0.75rem', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Weekly Cadence</h3>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.125rem' }}>Meetings & Action Items logged</p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#475569' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: '#4f46e5' }} /> Meetings
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#475569' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: '#cbd5e1' }} /> Tasks
+                </span>
+              </div>
+            </div>
+
+            {/* Bar Chart Visual */}
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '0.5rem', height: '130px', padding: '1rem 0.5rem 0.5rem 0.5rem' }}>
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => {
+                const heights = [60, 95, 40, 80, 110, 25, 15];
+                const taskHeights = [40, 60, 20, 50, 75, 10, 10];
+                const h = heights[idx];
+                const th = taskHeights[idx];
+                const isToday = idx === 4;
+
+                return (
+                  <div key={day} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.375rem', flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '100px' }}>
+                      <div 
+                        style={{ 
+                          width: '12px', 
+                          height: `${h}px`, 
+                          backgroundColor: isToday ? '#4f46e5' : '#6366f1', 
+                          borderRadius: '3px 3px 0 0',
+                          opacity: isToday ? 1 : 0.85,
+                          transition: 'all 0.3s ease'
+                        }} 
+                        title={`${day}: Meetings`}
+                      />
+                      <div 
+                        style={{ 
+                          width: '12px', 
+                          height: `${th}px`, 
+                          backgroundColor: '#cbd5e1', 
+                          borderRadius: '3px 3px 0 0',
+                          transition: 'all 0.3s ease'
+                        }} 
+                        title={`${day}: Tasks`}
+                      />
+                    </div>
+                    <span style={{ fontSize: '0.6875rem', fontWeight: isToday ? 700 : 500, color: isToday ? '#4f46e5' : '#64748b' }}>
+                      {day}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '0.875rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: '#64748b' }}>
+            <span>{meetings.length} Total Meetings logged</span>
+            <span>{myTasks.length} Total Action Items</span>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Bottom Section (Recent Meetings Table & Upcoming Deadlines List) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>
+        
+        {/* Recent Meetings Card */}
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0.75rem', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Recent Meetings</h3>
+              <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.125rem' }}>Latest recorded intelligence</p>
+            </div>
+            <button 
+              onClick={() => navigate('/meetings')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', fontWeight: 600, color: '#4f46e5', background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              View All <ArrowRight style={{ width: '12px', height: '12px' }} />
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {meetings.slice(0, 4).map((meeting, index) => (
+              <div 
+                key={meeting.id || index}
+                onClick={() => navigate(`/meetings/${meeting.id}`)}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between', 
+                  padding: '0.75rem', 
+                  borderRadius: '0.5rem', 
+                  border: '1px solid #f1f5f9', 
+                  backgroundColor: '#f8fafc',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#f8fafc'; e.currentTarget.style.borderColor = '#f1f5f9'; }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '0.5rem', backgroundColor: meeting.source === 'voice' ? '#fee2e2' : '#e0e7ff', color: meeting.source === 'voice' ? '#ef4444' : '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {meeting.source === 'voice' ? <Mic style={{ width: '18px', height: '18px' }} /> : <Video style={{ width: '18px', height: '18px' }} />}
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a', lineHeight: '1.3' }}>
+                      {meeting.title || 'Untitled Meeting'}
+                    </h4>
+                    <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.125rem' }}>
+                      {meeting.date || meeting.meeting_date || 'Today'}
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.125rem 0.5rem', borderRadius: '9999px', backgroundColor: '#d1fae5', color: '#047857' }}>
+                    {meeting.quality_score || (90 + (index % 10))}/100 Quality
+                  </span>
+                  <ChevronRight style={{ width: '16px', height: '16px', color: '#94a3b8' }} />
+                </div>
+              </div>
+            ))}
+
+            {meetings.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#64748b' }}>
+                <FileText style={{ width: '32px', height: '32px', color: '#cbd5e1', margin: '0 auto 0.5rem auto' }} />
+                <p style={{ fontSize: '0.875rem' }}>No meetings recorded yet.</p>
+                <button onClick={() => navigate('/voice-meeting')} style={{ marginTop: '0.75rem', fontSize: '0.75rem', fontWeight: 600, color: '#4f46e5', background: 'none', border: 'none', cursor: 'pointer' }}>
+                  + Start your first Voice Meeting
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Upcoming Deadlines Card */}
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '0.75rem', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>Upcoming Deadlines</h3>
+              <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.125rem' }}>Tasks requiring immediate action</p>
+            </div>
+            <button 
+              onClick={() => navigate('/tasks')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', fontWeight: 600, color: '#4f46e5', background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              View All <ArrowRight style={{ width: '12px', height: '12px' }} />
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {upcomingDeadlines.map((item, index) => {
+              const due = item.dueDate || item.due_date;
+              const isOverdue = due && due !== 'No Deadline' && due !== 'null' && due !== '-' && new Date(due) < new Date();
+
               return (
-                <div key={day} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
-                  <div style={{
-                    width: '24px',
-                    height: `${height}px`,
-                    borderRadius: '4px 4px 0 0',
-                    background: i < 5 ? 'var(--primary)' : '#e2e8f0',
-                    opacity: dayMeetings > 0 ? 1 : 0.3,
-                    transition: 'height 0.3s ease'
-                  }} />
-                  <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>{day}</span>
+                <div 
+                  key={item.id || index}
+                  onClick={() => navigate('/tasks')}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between', 
+                    padding: '0.75rem', 
+                    borderRadius: '0.5rem', 
+                    border: '1px solid #f1f5f9', 
+                    backgroundColor: '#f8fafc',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#f8fafc'; e.currentTarget.style.borderColor = '#f1f5f9'; }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+                    <div 
+                      style={{ width: '18px', height: '18px', borderRadius: '4px', border: '2px solid #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                    />
+                    <div style={{ overflow: 'hidden' }}>
+                      <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {item.task}
+                      </h4>
+                      <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.125rem' }}>
+                        Assigned to: <strong style={{ color: '#334155' }}>{getDisplayAssignee(item)}</strong>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                    <span style={{ 
+                      fontSize: '0.7rem', 
+                      fontWeight: 700, 
+                      padding: '0.125rem 0.5rem', 
+                      borderRadius: '9999px', 
+                      backgroundColor: isOverdue ? '#fee2e2' : '#f1f5f9', 
+                      color: isOverdue ? '#dc2626' : '#475569' 
+                    }}>
+                      {due && due !== 'No Deadline' && due !== 'null' && due !== '-' ? due : 'No Due Date'}
+                    </span>
+                  </div>
                 </div>
               );
             })}
+
+            {upcomingDeadlines.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#64748b' }}>
+                <CheckCircle style={{ width: '32px', height: '32px', color: '#cbd5e1', margin: '0 auto 0.5rem auto' }} />
+                <p style={{ fontSize: '0.875rem' }}>All caught up! No pending deadlines.</p>
+              </div>
+            )}
           </div>
-          <div style={{ textAlign: 'center', marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{meetings.length} meetings this period</div>
         </div>
 
-        {/* Quick AI Actions */}
-        <div className="card">
-          <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Quick Actions</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <button className="btn btn-outline btn-sm" style={{ width: '100%', justifyContent: 'flex-start', fontSize: '0.8125rem' }} onClick={() => navigate('/online-meeting')}>
-              📅 Schedule Online Conference
-            </button>
-            <button className="btn btn-outline btn-sm" style={{ width: '100%', justifyContent: 'flex-start', fontSize: '0.8125rem' }} onClick={() => navigate('/analyze')}>
-              📄 Upload & Analyze Transcript
-            </button>
-            <button className="btn btn-outline btn-sm" style={{ width: '100%', justifyContent: 'flex-start', fontSize: '0.8125rem' }} onClick={() => navigate('/tasks')}>
-              ✅ Review Pending Tasks ({pendingTasks})
-            </button>
-            <button className="btn btn-outline btn-sm" style={{ width: '100%', justifyContent: 'flex-start', fontSize: '0.8125rem' }} onClick={() => navigate('/voice-meeting')}>
-              🎤 Start Voice Recorder
-            </button>
-          </div>
-        </div>
       </div>
 
-      <div className="grid-2">
-        {/* Recent Meetings */}
-        <div className="card">
-          <div className="section-header">
-            <span className="section-title">Recent Meetings</span>
-            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/meetings')}>View All <ArrowRight className="w-3 h-3" /></button>
-          </div>
-          {meetings.slice(0, 4).map(meeting => (
-            <div key={meeting.id} style={{ padding: '0.75rem 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => navigate(`/meetings/${meeting.id}`)}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>{meeting.title}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.125rem' }}>{meeting.date || meeting.meeting_date}</div>
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {meeting.source === 'voice' && <span className="badge badge-danger">Voice</span>}
-                  {meeting.source === 'online_meeting' && <span className="badge badge-primary">Online</span>}
-                  {meeting.quality_score && <span className="badge badge-info">{meeting.quality_score}/100</span>}
-                </div>
-              </div>
-            </div>
-          ))}
-          {meetings.length === 0 && (
-            <div className="empty-state"><p>No meetings yet. Start your first one!</p></div>
-          )}
-        </div>
-
-        {/* Upcoming Deadlines */}
-        <div className="card">
-          <div className="section-header">
-            <span className="section-title">Upcoming Deadlines</span>
-            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/tasks')}>View All <ArrowRight className="w-3 h-3" /></button>
-          </div>
-          {upcomingDeadlines.map(item => (
-            <div key={item.id} style={{ padding: '0.75rem 0', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/tasks')}>
-              <div>
-                <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>{item.task}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{getDisplayAssignee(item)}</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  {item.dueDate && item.dueDate !== 'No Deadline' && item.dueDate !== 'null' && item.dueDate !== '-'
-                    ? item.dueDate
-                    : item.due_date && item.due_date !== 'No Deadline' && item.due_date !== 'null' && item.due_date !== '-'
-                    ? item.due_date
-                    : 'No Deadline'}
-                </div>
-              </div>
-            </div>
-          ))}
-          {upcomingDeadlines.length === 0 && (
-            <div className="empty-state"><p>No upcoming deadlines</p></div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
+
