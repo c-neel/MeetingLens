@@ -175,7 +175,7 @@ export default function MeetingAIChat({ meeting }) {
               <Bot className="w-4 h-4" />
             </div>
             <div style={{ background: 'white', padding: '0.75rem 1rem', borderRadius: '0 12px 12px 12px', fontSize: '0.8125rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <RefreshCw className="w-3.5 h-3.5 animate-spin text-primary" /> MeetAI is analyzing and generating response...
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-primary" /> MeetingLens is analyzing and generating response...
             </div>
           </div>
         )}
@@ -186,7 +186,7 @@ export default function MeetingAIChat({ meeting }) {
       <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} style={{ padding: '0.875rem 1rem', background: 'white', borderTop: '1px solid var(--border)', display: 'flex', gap: '0.5rem' }}>
         <input
           type="text"
-          placeholder="Ask MeetAI anything about this meeting..."
+          placeholder="Ask MeetingLens anything about this meeting..."
           value={inputPrompt}
           onChange={(e) => setInputPrompt(e.target.value)}
           style={{

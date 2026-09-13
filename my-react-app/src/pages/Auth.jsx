@@ -227,12 +227,10 @@ export default function Auth() {
             display: 'flex',
             flexDirection: 'column'
           }}>
-            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '3rem', height: '3rem', borderRadius: '9999px', backgroundColor: '#2170e4', color: '#fefcff', marginBottom: '1rem' }}>
-                <UserPlus size={24} />
-              </div>
-              <h1 style={{ fontFamily: 'Manrope, sans-serif', fontSize: '24px', fontWeight: 600, color: '#0b1c30', margin: '0 0 0.5rem 0' }}>Create an account</h1>
-              <p style={{ fontSize: '16px', color: '#424754', margin: 0 }}>Join our community today.</p>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <img src="/logo.png" alt="MeetingLens Logo" style={{ height: '48px', margin: '0 auto 0.75rem auto', display: 'block', objectFit: 'contain' }} />
+              <h1 style={{ fontFamily: 'Manrope, sans-serif', fontSize: '24px', fontWeight: 700, color: '#0b1c30', margin: '0 0 0.25rem 0' }}>MeetingLens</h1>
+              <p style={{ fontSize: '15px', color: '#424754', margin: 0 }}>Create your MeetingLens account</p>
             </div>
 
             {error && (
@@ -347,9 +345,10 @@ export default function Auth() {
             </div>
 
             {/* Header */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', textAlign: 'center' }}>
-              <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#0f172a', margin: 0 }}>
-                Welcome back
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'center', alignItems: 'center' }}>
+              <img src="/logo.png" alt="MeetingLens Logo" style={{ height: '52px', objectFit: 'contain', marginBottom: '0.25rem' }} />
+              <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                Welcome to MeetingLens
               </h1>
               <p style={{ fontSize: '14px', color: '#475569', margin: 0 }}>
                 Please enter your details to sign in.

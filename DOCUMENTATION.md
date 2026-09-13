@@ -1,6 +1,6 @@
-# 🎙️ Voice Assistant - Technical Documentation
+# 👁️ MeetingLens - Technical Documentation
 
-This document provides a deep dive into the technical architecture, project structure, and developer guidelines for the **Voice Assistant (AI MOM & Task Generation System)** project.
+This document provides a deep dive into the technical architecture, project structure, and developer guidelines for the **MeetingLens (AI MOM & Task Generation System)** project.
 
 ## 🏗️ Architecture Overview
 

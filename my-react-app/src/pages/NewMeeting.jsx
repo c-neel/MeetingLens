@@ -160,7 +160,7 @@ export default function NewMeeting() {
     const ext = file.name.split('.').pop().toLowerCase();
     // Check if the uploaded file is binary (e.g. PDF / Word document)
     if (fileText.startsWith('%PDF') || fileText.includes('\x00')) {
-      alert(`The file "${file.name}" is a binary document. MeetAI requires a text-based transcript. Please upload a .txt or .md transcript file.`);
+      alert(`The file "${file.name}" is a binary document. MeetingLens requires a text-based transcript. Please upload a .txt or .md transcript file.`);
       setProcessing(false);
       return;
     }

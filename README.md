@@ -1,4 +1,8 @@
-# 🎙️ Voice Assistant v2.0 (AI MOM, Task Delegation & Analytics System)
+# 👁️ MeetingLens v2.0 (AI MOM, Task Delegation & Analytics System)
+
+<p align="center">
+  <img src="my-react-app/public/logo.png" alt="MeetingLens Logo" width="220" />
+</p>
 
 ![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![React](https://img.shields.io/badge/frontend-React.js_18-61DAFB.svg?logo=react)
@@ -8,7 +12,7 @@
 ![Gemini AI](https://img.shields.io/badge/AI-Google_Gemini-FFCA28.svg?logo=google)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Voice Assistant v2.0** is an enterprise-grade AI-powered web platform designed to streamline voice meetings, automate Minutes of Meeting (MOM) creation, intelligently extract action items with confidence scoring, and seamlessly delegate tasks via automated emails and calendar integrations.
+**MeetingLens** is an enterprise-grade AI-powered web platform designed to streamline voice meetings, automate Minutes of Meeting (MOM) creation, intelligently extract action items with confidence scoring, and seamlessly delegate tasks via automated emails and calendar integrations.
 
 ---
 
@@ -51,7 +55,7 @@
 ## 📂 Project Architecture
 
 ```text
-Voice Assistant v2.0/
+MeetingLens/
 ├── backend/                      # PHP REST API Backend
 │   ├── api/                      # API Endpoints
 │   │   ├── action-items/         # Task management & CRUD operations
@@ -67,6 +71,9 @@ Voice Assistant v2.0/
 │   └── uploads/                  # Storage for uploaded files and PDFs
 │
 ├── my-react-app/                 # React.js Frontend (Vite)
+│   ├── public/                   # Static assets & logo icons
+│   │   ├── favicon.png
+│   │   └── logo.png              # MeetingLens Official Brand Logo
 │   ├── src/
 │   │   ├── assets/               # Branding assets & SVG icons
 │   │   ├── components/           # Reusable UI components (Sidebar, Topbar, Modals)
@@ -138,8 +145,8 @@ Voice Assistant v2.0/
 
 ### 1. Repository Clone
 ```bash
-git clone https://github.com/c-neel/VendorBridge.git
-cd VendorBridge
+git clone https://github.com/c-neel/Voice-Assistant.git
+cd Voice-Assistant
 ```
 
 ### 2. Backend Setup
@@ -190,12 +197,6 @@ cd VendorBridge
 
 Contributions are always welcome! Feel free to submit a Pull Request or open an Issue on GitHub.
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git checkout -b feature/AmazingFeature` & `git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
 ---
 
 ## 📄 License
@@ -204,4 +205,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
-*Voice Assistant v2.0 — Built with ❤️ for intelligent meeting automation.*
+*MeetingLens — Built with ❤️ for intelligent meeting automation.*

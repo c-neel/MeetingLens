@@ -23,7 +23,7 @@ if (!empty($data->user_prompt)) {
     $actionItems = !empty($data->action_items) ? json_encode($data->action_items) : '[]';
 
     // Construct full meeting context prompt
-    $systemContext = "You are MeetAI Assistant, an expert AI meeting analyst. You are answering questions about a specific meeting titled \"{$meeting_title}\".
+    $systemContext = "You are MeetingLens Assistant, an expert AI meeting analyst. You are answering questions about a specific meeting titled \"{$meeting_title}\".
 
 Here is the authoritative context for this meeting:
 - Title: {$meeting_title}

@@ -49,7 +49,7 @@ export default function OnlineMeeting() {
 
   // Generate random room code
   const generateRoomName = () => {
-    const code = 'MeetAI-' + Math.random().toString(36).substring(2, 9);
+    const code = 'MeetingLens-' + Math.random().toString(36).substring(2, 9);
     setRoomName(code);
   };
 
@@ -252,7 +252,7 @@ export default function OnlineMeeting() {
               <input
                 type="text"
                 className="form-input"
-                placeholder="e.g. MeetAI-ProjectSync-2026"
+                placeholder="e.g. MeetingLens-ProjectSync-2026"
                 value={roomName}
                 onChange={e => setRoomName(e.target.value)}
                 required

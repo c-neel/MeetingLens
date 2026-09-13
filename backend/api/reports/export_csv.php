@@ -357,7 +357,7 @@ try {
     fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
     // Executive Document Header & Summary Sentence
-    fputcsv($output, ['MEETAI PRODUCTIVITY & PERFORMANCE REPORT'], ',', '"', "\\");
+    fputcsv($output, ['MEETINGLENS PRODUCTIVITY & PERFORMANCE REPORT'], ',', '"', "\\");
     fputcsv($output, ['Reporting Period', "{$start_date} to {$end_date}"], ',', '"', "\\");
     fputcsv($output, ['Comparison Period', "{$prev_start_date} to {$prev_end_date}"], ',', '"', "\\");
     fputcsv($output, ['User Scope', "{$user_name} (" . ($is_lead ? 'Lead / Team Access' : 'Member Access') . ")"], ',', '"', "\\");

@@ -991,7 +991,7 @@ export default function Reports() {
             fontSize: '0.75rem',
             color: 'var(--text-muted)'
           }}>
-            <span>MeetAI Automated Intelligence Report Engine</span>
+            <span>MeetingLens Automated Intelligence Report Engine</span>
             <span>Generated on {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
           </div>
 

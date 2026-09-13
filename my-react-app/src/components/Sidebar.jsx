@@ -5,9 +5,9 @@ import { LayoutDashboard, PlusCircle, Mic, Video, Calendar, CheckSquare, FileBar
 export default function Sidebar() {
   return (
     <div className="sidebar">
-      <div className="sidebar-logo">
-        <Sparkles className="w-6 h-6" style={{ color: 'var(--primary)' }} />
-        <span>MeetAI</span>
+      <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0' }}>
+        <img src="/logo.png" alt="MeetingLens Logo" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
+        <span style={{ fontWeight: 700, fontSize: '1.25rem', letterSpacing: '-0.02em', background: 'linear-gradient(135deg, #1e3a8a, #3b82f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>MeetingLens</span>
       </div>
 
       <div className="nav-section-label">Main</div>

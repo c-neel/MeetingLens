@@ -174,7 +174,7 @@ export default function ForgotPassword() {
         }}>
           
           {/* Back to Login Header */}
-          <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ marginBottom: '1.25rem' }}>
             <button 
               type="button" 
               onClick={() => navigate('/login')}
@@ -182,6 +182,12 @@ export default function ForgotPassword() {
             >
               <ArrowLeft size={16} /> Back to Sign In
             </button>
+          </div>
+
+          {/* Brand Header */}
+          <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+            <img src="/logo.png" alt="MeetingLens Logo" style={{ height: '44px', margin: '0 auto 0.25rem auto', display: 'block', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 700, fontSize: '1.25rem', letterSpacing: '-0.02em', background: 'linear-gradient(135deg, #1e3a8a, #3b82f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>MeetingLens</span>
           </div>
 
           {/* STEP 1: REQUEST OTP */}

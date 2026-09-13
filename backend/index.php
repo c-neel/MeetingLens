@@ -12,7 +12,7 @@ $keyConfigured = isGeminiKeyConfigured();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Assistant Backend API</title>
+    <title>MeetingLens Backend API</title>
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         body { background: #0f172a; color: #f8fafc; margin: 0; padding: 2rem; display: flex; justify-content: center; }
@@ -34,7 +34,7 @@ $keyConfigured = isGeminiKeyConfigured();
 </head>
 <body>
     <div class="container">
-        <h1>⚡ Voice Assistant Backend Server</h1>
+        <h1>👁️ MeetingLens Backend Server</h1>
         <p>PHP Server Status: <span class="status-badge status-ok">● Running on Port 8000</span></p>
 
         <div class="card">

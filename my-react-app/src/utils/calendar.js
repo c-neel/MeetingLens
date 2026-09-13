@@ -71,11 +71,11 @@ export function downloadIcsFile({
   const icsContent = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//MeetAI Assistant//NONSGML Event//EN',
+    'PRODID:-//MeetingLens Assistant//NONSGML Event//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:REQUEST',
     'BEGIN:VEVENT',
-    `UID:${Date.now()}@meetai.app`,
+    `UID:${Date.now()}@meetinglens.app`,
     `DTSTAMP:${startIso}`,
     `DTSTART:${startIso}`,
     `DTEND:${endIso}`,

@@ -9,8 +9,8 @@ export default function LandingPage() {
     <div className="landing-page">
       <nav className="landing-nav">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <Zap className="w-6 h-6" style={{ color: 'var(--primary)' }} />
-          <span style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--primary)' }}>MeetAI</span>
+          <img src="/logo.png" alt="MeetingLens Logo" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
+          <span style={{ fontWeight: 700, fontSize: '1.35rem', letterSpacing: '-0.02em', background: 'linear-gradient(135deg, #1e3a8a, #3b82f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>MeetingLens</span>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button className="btn btn-outline" onClick={() => navigate('/login')}>Log In</button>

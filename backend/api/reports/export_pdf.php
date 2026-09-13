@@ -355,7 +355,7 @@ try {
             $this->SetY(12);
             $this->SetFont('Arial', 'B', 18);
             $this->SetTextColor(15, 23, 42);
-            $this->Cell(120, 8, 'MeetAI Productivity Report', 0, 0, 'L');
+            $this->Cell(120, 8, 'MeetingLens Productivity Report', 0, 0, 'L');
 
             $this->SetFont('Arial', '', 9);
             $this->SetTextColor(100, 116, 139);
@@ -380,7 +380,7 @@ try {
             $this->Line(10, $this->GetY(), 200, $this->GetY());
             $this->SetFont('Arial', '', 8);
             $this->SetTextColor(148, 163, 184);
-            $this->Cell(100, 10, 'MeetAI - AI Meeting Minutes & Task Management System', 0, 0, 'L');
+            $this->Cell(100, 10, 'MeetingLens - AI Meeting Minutes & Task Management System', 0, 0, 'L');
             $this->Cell(90, 10, 'Page ' . $this->PageNo() . ' of {nb}', 0, 0, 'R');
         }
 
