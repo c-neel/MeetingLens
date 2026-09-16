@@ -1,4 +1,13 @@
 {
+  "name": "meetinglens",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npm --prefix my-react-app run dev",
+    "build": "npm --prefix my-react-app run build",
+    "start": "npm --prefix my-react-app run dev",
+    "preview": "npm --prefix my-react-app run preview"
+  },
   "dependencies": {
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
