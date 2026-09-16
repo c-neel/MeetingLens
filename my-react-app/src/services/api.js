@@ -531,16 +531,59 @@ function getMockActionItems() {
       { id: 7, user_id: 5, meeting_id: 5, task: 'Fix payment bug #102', assignee: 'Vikram Singh', dueDate: '2026-08-09', due_date: '2026-08-09', priority: 'High', status: 'Completed', confidence: 95, meeting_title: 'Quarterly Business Review' },
     ];
   }
-  return cachedMockActionItems.filter(i => parseInt(i.user_id) === parseInt(userId));
+
+  const customTasks = [];
+  customMockMeetings.forEach(m => {
+    if (m.actionItems && Array.isArray(m.actionItems)) {
+      m.actionItems.forEach((t, i) => {
+        customTasks.push({
+          id: t.id || (m.id * 10 + i),
+          user_id: m.user_id || userId,
+          meeting_id: m.id,
+          meeting_title: m.title,
+          task: t.task,
+          assignee: t.assignee || '-',
+          dueDate: t.dueDate || t.due_date || null,
+          due_date: t.dueDate || t.due_date || null,
+          priority: t.priority || 'Medium',
+          status: t.status || 'Pending',
+          confidence: t.confidence || 85
+        });
+      });
+    }
+  });
+
+  const all = [...customTasks, ...cachedMockActionItems];
+  return all.filter(i => parseInt(i.user_id) === parseInt(userId));
 }
 
 function updateMockActionItem(id, data) {
+  const targetId = parseInt(id);
   if (cachedMockActionItems) {
-    const index = cachedMockActionItems.findIndex(i => i.id === parseInt(id));
-    if (index !== -1 && data.status) {
-      cachedMockActionItems[index].status = data.status;
+    const index = cachedMockActionItems.findIndex(i => parseInt(i.id) === targetId);
+    if (index !== -1) {
+      if (data.status) cachedMockActionItems[index].status = data.status;
+      if (data.assignee) cachedMockActionItems[index].assignee = data.assignee;
+      if (data.due_date) {
+        cachedMockActionItems[index].due_date = data.due_date;
+        cachedMockActionItems[index].dueDate = data.due_date;
+      }
     }
   }
+  customMockMeetings.forEach(m => {
+    if (m.actionItems && Array.isArray(m.actionItems)) {
+      m.actionItems.forEach(t => {
+        if (parseInt(t.id) === targetId) {
+          if (data.status) t.status = data.status;
+          if (data.assignee) t.assignee = data.assignee;
+          if (data.due_date) {
+            t.due_date = data.due_date;
+            t.dueDate = data.due_date;
+          }
+        }
+      });
+    }
+  });
 }
 
 function getMockDocuments() {
