@@ -178,7 +178,7 @@ export default function NewMeeting() {
     const stepsAnimation = (async () => {
       for (let i = 0; i < steps.length; i++) {
         setProcessStep(i);
-        await new Promise(r => setTimeout(r, 600));
+        await new Promise(r => setTimeout(r, 200));
       }
     })();
 

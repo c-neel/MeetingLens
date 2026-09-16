@@ -414,14 +414,19 @@ Return ONLY valid JSON with exactly this structure:
 
   const userMessage = systemPrompt + "\n\n--- MEETING TRANSCRIPT ---\nTitle: " + (meetingTitle || 'Untitled Meeting') + "\n\n" + transcriptText + "\n--- END TRANSCRIPT ---";
 
-  const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-flash-latest'];
+  // Fast, widely active Gemini models
+  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-flash-latest'];
 
   for (const model of models) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout per model
+
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: userMessage }] }],
           generationConfig: {
@@ -430,6 +435,7 @@ Return ONLY valid JSON with exactly this structure:
           }
         })
       });
+      clearTimeout(timeoutId);
 
       if (!res.ok) continue;
 
@@ -466,11 +472,12 @@ Return ONLY valid JSON with exactly this structure:
         model: `Google Gemini AI (${model})`
       };
     } catch (e) {
-      console.warn(`Direct Gemini API call failed for model ${model}:`, e);
+      clearTimeout(timeoutId);
+      console.warn(`Direct Gemini API call failed or timed out for model ${model}:`, e);
     }
   }
 
-  // Fallback to local analysis if direct API fails
+  // Instant fallback to client analysis if direct API calls time out
   return generateClientFallbackAnalysis(transcriptText, meetingTitle);
 };
 
@@ -481,20 +488,25 @@ export const processTranscript = async (transcriptText, meetingTitle) => {
   console.log('[AI Pipeline] Meeting title:', meetingTitle);
   console.log('[AI Pipeline] Transcript length:', transcriptText ? transcriptText.length : 0, 'characters');
 
-  // Call the PHP backend — if reachable
+  // Call the PHP backend with a fast 2.5s timeout
   let response;
+  const phpController = new AbortController();
+  const phpTimeoutId = setTimeout(() => phpController.abort(), 2500);
+
   try {
     response = await fetch(`${BASE_URL}/analyze/index.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: phpController.signal,
       body: JSON.stringify({
         transcript: transcriptText,
         title: meetingTitle || 'Untitled Meeting'
       })
     });
+    clearTimeout(phpTimeoutId);
   } catch (networkError) {
-    // Network error — backend server at localhost:8000 is not reachable (e.g. Vercel/v0 preview)
-    console.warn('[AI Pipeline] Backend server at localhost:8000 unreachable. Calling direct Gemini API from browser:', networkError.message);
+    clearTimeout(phpTimeoutId);
+    console.warn('[AI Pipeline] Backend server at localhost:8000 unreachable or timed out. Calling direct Gemini API:', networkError.message);
     return await callDirectGeminiAPI(transcriptText, meetingTitle);
   }
 
