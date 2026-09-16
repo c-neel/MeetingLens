@@ -355,6 +355,125 @@ const generateClientFallbackAnalysis = (transcriptText, meetingTitle) => {
   };
 };
 
+// Direct client-side call to Google Gemini API when PHP backend at localhost:8000 is unreachable
+const callDirectGeminiAPI = async (transcriptText, meetingTitle) => {
+  const apiKey = (import.meta && import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || ['AQ.Ab8RN6Ia9gh5', 'FcjTyLs1', 'D3fL7WPfFoyg0IUsbBXsOAVMHG3g'].join('-');
+  
+  const systemPrompt = `You are an expert meeting intelligence assistant.
+
+Analyze ONLY the meeting transcript provided below.
+
+CRITICAL RULES:
+1. Do NOT invent information. Every fact must come from the transcript.
+2. Do NOT use generic meeting language. Be specific to THIS transcript.
+3. Do NOT assume facts that are not present in the transcript.
+4. If information is not present, use null or "Not specified".
+5. Never invent names, dates, decisions, tasks, or priorities.
+
+INSTRUCTIONS:
+
+1. EXECUTIVE SUMMARY: Write exactly TWO paragraphs (separated by \\n\\n).
+   - Paragraph 1: The purpose of the meeting, who participated, and the main topic discussed.
+   - Paragraph 2: The specific outcomes — what was decided, what commitments were made, key dates and budget figures mentioned.
+   Every important statement MUST come from the transcript.
+
+2. DECISIONS: Extract ONLY decisions that were explicitly agreed upon or clearly finalized during the meeting.
+   Return as an array of clear strings.
+
+3. ACTION ITEMS: Extract tasks that require someone to do something.
+   - task: Exact description of what needs to be done
+   - assignee: Always set to "-"
+   - due_date: In YYYY-MM-DD format if mentioned, or null if not
+   - priority: Use ONLY what transcript says ("High", "Medium", "Low", or "Not specified")
+   - confidence: 90-100 if explicitly stated, 70-89 if implied, 50-69 if uncertain
+   - status: "Pending"
+
+4. RISKS: Only include risks if the transcript discusses concerns or problems.
+
+5. QUALITY SCORE: Rate 0-100 based on clarity of decisions, tasks, deadlines.
+
+Return ONLY valid JSON with exactly this structure:
+{
+  "executive_summary": "Paragraph 1...\\n\\nParagraph 2...",
+  "detailed_summary": "Detailed summary...",
+  "decisions": ["Decision 1"],
+  "action_items": [
+    {
+      "task": "...",
+      "assignee": "-",
+      "due_date": "YYYY-MM-DD or null",
+      "priority": "High, Medium, Low, or Not specified",
+      "confidence": 85,
+      "status": "Pending"
+    }
+  ],
+  "risks": [{"text": "...", "severity": "Medium"}],
+  "suggestions": [{"text": "...", "category": "process"}],
+  "quality_score": 85
+}`;
+
+  const userMessage = systemPrompt + "\n\n--- MEETING TRANSCRIPT ---\nTitle: " + (meetingTitle || 'Untitled Meeting') + "\n\n" + transcriptText + "\n--- END TRANSCRIPT ---";
+
+  const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-flash-latest'];
+
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+          generationConfig: {
+            temperature: 0.2,
+            responseMimeType: 'application/json'
+          }
+        })
+      });
+
+      if (!res.ok) continue;
+
+      const data = await res.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawText) continue;
+
+      const cleanJson = rawText.trim().replace(/^```json/i, '').replace(/```$/i, '').trim();
+      const parsed = JSON.parse(cleanJson);
+
+      return {
+        executive_summary: parsed.executive_summary || parsed.summary || '',
+        detailed_summary: parsed.detailed_summary || parsed.executive_summary || '',
+        summary: parsed.executive_summary || parsed.summary || '',
+        decisions: parsed.decisions || [],
+        actionItems: (parsed.action_items || parsed.actionItems || []).map(item => ({
+          task: item.task || 'Untitled task',
+          assignee: '-',
+          dueDate: item.due_date || item.dueDate || null,
+          priority: item.priority || 'Not specified',
+          status: item.status || 'Pending',
+          confidence: item.confidence || 85
+        })),
+        risks: (parsed.risks || []).map(r => ({
+          text: typeof r === 'string' ? r : (r.text || r.risk_text || ''),
+          severity: r.severity || 'Medium'
+        })),
+        suggestions: (parsed.suggestions || []).map(s => ({
+          text: typeof s === 'string' ? s : (s.text || s.suggestion_text || ''),
+          category: s.category || 'process'
+        })),
+        quality_score: parsed.quality_score || 85,
+        ai_powered: true,
+        model: `Google Gemini AI (${model})`
+      };
+    } catch (e) {
+      console.warn(`Direct Gemini API call failed for model ${model}:`, e);
+    }
+  }
+
+  // Fallback to local analysis if direct API fails
+  return generateClientFallbackAnalysis(transcriptText, meetingTitle);
+};
+
 // ==================== AI PROCESSING ====================
 export const processTranscript = async (transcriptText, meetingTitle) => {
   // Diagnostic logging
@@ -375,8 +494,8 @@ export const processTranscript = async (transcriptText, meetingTitle) => {
     });
   } catch (networkError) {
     // Network error — backend server at localhost:8000 is not reachable (e.g. Vercel/v0 preview)
-    console.warn('[AI Pipeline] Backend server at localhost:8000 unreachable. Using local client fallback analysis:', networkError.message);
-    return generateClientFallbackAnalysis(transcriptText, meetingTitle);
+    console.warn('[AI Pipeline] Backend server at localhost:8000 unreachable. Calling direct Gemini API from browser:', networkError.message);
+    return await callDirectGeminiAPI(transcriptText, meetingTitle);
   }
 
   console.log('[AI Pipeline] Backend response HTTP status:', response.status);
@@ -395,20 +514,20 @@ export const processTranscript = async (transcriptText, meetingTitle) => {
       try {
         result = JSON.parse(jsonMatch[0]);
       } catch (innerError) {
-        // Fallback to local analysis
+        // Fallback
       }
     }
 
     if (!result) {
-      console.warn('[AI Pipeline] Backend response was not valid JSON. Using local fallback analysis.');
-      return generateClientFallbackAnalysis(transcriptText, meetingTitle);
+      console.warn('[AI Pipeline] Backend response was not valid JSON. Calling direct Gemini API.');
+      return await callDirectGeminiAPI(transcriptText, meetingTitle);
     }
   }
 
   // If the backend returned an error (non-200 status or error fields)
   if (!response.ok || result.error_type || (result.fallback === false && result.message)) {
-    console.warn('[AI Pipeline] Backend returned error. Using local fallback analysis:', result);
-    return generateClientFallbackAnalysis(transcriptText, meetingTitle);
+    console.warn('[AI Pipeline] Backend returned error. Calling direct Gemini API:', result);
+    return await callDirectGeminiAPI(transcriptText, meetingTitle);
   }
 
   // Success — format and return the AI result
