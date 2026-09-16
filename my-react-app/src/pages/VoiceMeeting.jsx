@@ -450,7 +450,7 @@ export default function VoiceMeeting() {
 
         <div className="card">
           <h3 style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>Executive Summary</h3>
-          <p style={{ background: '#f8fafc', padding: '1rem', borderRadius: '0.5rem', border: '1px solid var(--border)' }}>{results.executive_summary}</p>
+          <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '0.5rem', border: '1px solid var(--border)', lineHeight: 1.6, whiteSpace: 'pre-line' }}>{results.executive_summary}</div>
         </div>
 
         <div className="grid-2">

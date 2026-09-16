@@ -145,8 +145,8 @@ MeetingLens/
 
 ### 1. Repository Clone
 ```bash
-git clone https://github.com/c-neel/Voice-Assistant.git
-cd Voice-Assistant
+git clone https://github.com/c-neel/MeetingLens.git
+cd MeetingLens
 ```
 
 ### 2. Backend Setup

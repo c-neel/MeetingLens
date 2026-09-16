@@ -70,65 +70,14 @@ export default function TaskApproval() {
       return;
     }
 
-    // Standard fetch for task details
+    // Standard DB fetch for non-voice-meeting flows
     const fetchTaskDetails = async () => {
       try {
-        if (location.state?.taskData) {
-          const t = location.state.taskData;
-          setTask(t);
-          const rawAssignee = t.assignee ? String(t.assignee).trim() : '';
-          const isPlaceholder = !rawAssignee || ['unassigned', 'none', 'not specified', '-'].includes(rawAssignee.toLowerCase());
-          setAssigneeName(isPlaceholder ? '' : rawAssignee);
-          const rawDate = t.dueDate || t.due_date;
-          setDueDate(rawDate && rawDate !== 'No Deadline' && rawDate !== 'null' && rawDate !== '-' ? rawDate : '');
-          setPriority(t.priority || 'Medium');
-          setLoading(false);
-          return;
-        }
-
         const tasks = await getActionItems();
-        let foundTask = tasks.find(t => String(t.id) === String(id));
-
-        // Search meetings if not directly found in action items
-        if (!foundTask) {
-          const meetings = await getMeetings();
-          for (const m of meetings) {
-            if (m.actionItems && Array.isArray(m.actionItems)) {
-              const matched = m.actionItems.find(t => String(t.id) === String(id));
-              if (matched) {
-                foundTask = {
-                  ...matched,
-                  meeting_id: m.id,
-                  meeting_title: m.title
-                };
-                setMeeting(m);
-                break;
-              }
-            }
-          }
-        }
-
-        // Search active drafts in sessionStorage if still not found
-        if (!foundTask) {
-          try {
-            const draftStr = sessionStorage.getItem('meetai_analysis_draft') || sessionStorage.getItem('meetai_voice_draft');
-            if (draftStr) {
-              const draft = JSON.parse(draftStr);
-              if (draft && draft.editedTasks) {
-                const matched = draft.editedTasks.find((t, idx) => String(t.id) === String(id) || String(idx) === String(id));
-                if (matched) {
-                  foundTask = {
-                    ...matched,
-                    meeting_title: draft.title || 'Meeting Action Item'
-                  };
-                }
-              }
-            }
-          } catch (e) {}
-        }
-
+        const foundTask = tasks.find(t => t.id === parseInt(id));
         if (foundTask) {
           setTask(foundTask);
+          // Only pre-fill assignee if it's a real name (not a placeholder)
           const rawAssignee = foundTask.assignee ? String(foundTask.assignee).trim() : '';
           const isPlaceholder = !rawAssignee || ['unassigned', 'none', 'not specified', '-'].includes(rawAssignee.toLowerCase());
           setAssigneeName(isPlaceholder ? '' : rawAssignee);
@@ -145,9 +94,10 @@ export default function TaskApproval() {
             }
           }
 
-          if (foundTask.meeting_id && !meeting) {
+          // Fetch meeting details for context if meeting_id exists
+          if (foundTask.meeting_id) {
             const meetings = await getMeetings();
-            const foundMeeting = meetings.find(m => String(m.id) === String(foundTask.meeting_id));
+            const foundMeeting = meetings.find(m => m.id === foundTask.meeting_id);
             if (foundMeeting) setMeeting(foundMeeting);
           }
         } else {
@@ -161,7 +111,7 @@ export default function TaskApproval() {
     };
     
     fetchTaskDetails();
-  }, [id, location.state]);
+  }, [id]);
 
   const handleTeamMemberSelect = (member) => {
     setAssigneeName(member.name);

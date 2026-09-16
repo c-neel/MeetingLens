@@ -367,7 +367,7 @@ export default function OnlineMeeting() {
 
           <div style={{ marginBottom: '1.5rem' }}>
             <h4 style={{ color: 'var(--primary)', fontWeight: 600, marginBottom: '0.5rem' }}>Executive Summary</h4>
-            <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.875rem', lineHeight: 1.6 }}>
+            <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.875rem', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
               {aiResult.executive_summary}
             </div>
           </div>

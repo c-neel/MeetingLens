@@ -7,6 +7,10 @@
 ini_set('display_errors', '0');
 error_reporting(E_ALL);
 
+// Extend maximum execution time for multi-pass AI generation and review (180s)
+@set_time_limit(180);
+@ini_set('max_execution_time', '180');
+
 // Buffer all output so that accidental whitespace or warnings never leak before headers
 ob_start();
 
@@ -53,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 try {
     include_once __DIR__ . '/../../config/ai_config.php';
+    include_once __DIR__ . '/cleaner.php';
 
     // ============================================================
     // STEP 1: VALIDATE API KEY
@@ -114,19 +119,25 @@ CRITICAL RULES:
 3. Do NOT assume facts that are not present in the transcript.
 4. If information is not present, use null or "Not specified".
 5. Never invent names, dates, decisions, tasks, or priorities.
+6. CONTENT CLEANING & SANITIZATION: After generating the meeting summary, review the summary for explicit, inappropriate, irrelevant, or unwanted content. Remove only content that is clearly unnecessary, explicit, inappropriate, or unrelated to the meeting. Do NOT remove, alter, or oversimplify important information, including key decisions, tasks, deadlines, responsibilities, names, requirements, conclusions, or important discussion points. Preserve the original meaning and context of the summary. If a sentence contains both important and unwanted information, remove only the unwanted portion while keeping the important information intact.
+7. PARAGRAPH-ONLY SUMMARY FORMAT: Return the transcript summary ONLY in clear, well-structured paragraphs. Do NOT use bullet points, numbered lists, headings, bold section titles, tables, or separate sections in the summary text. Combine related information naturally into flowing paragraphs while preserving all important details, decisions, tasks, deadlines, responsibilities, and relevant context. Keep the summary concise, readable, and logically organized.
 
 INSTRUCTIONS:
 
-1. EXECUTIVE SUMMARY: Write exactly TWO paragraphs (separated by \\n\\n).
-   - Paragraph 1: The purpose of the meeting, who participated, and the main topic discussed.
-   - Paragraph 2: The specific outcomes — what was decided, what commitments were made, key dates and budget figures mentioned.
-   Every important statement MUST come from the transcript.
+1. EXECUTIVE SUMMARY: Write at least 2 to 3 distinct, well-structured paragraphs (separated by double line breaks \n\n). NEVER return the executive summary as a single giant wall of text.
+   - Paragraph 1: The purpose of the meeting, who participated, and the core discussion focus.
+   - Paragraph 2: Key progress reports, technical status, and project updates mentioned.
+   - Paragraph 3: Specific outcomes, decisions made, target deadlines, testing timelines, and next steps.
+   Every statement MUST come from the transcript.
+   Review and clean the summary to filter out any explicit, inappropriate, or irrelevant content while preserving all critical context, decisions, tasks, deadlines, and responsibilities.
 
-2. DECISIONS: Extract ONLY decisions that were explicitly agreed upon or clearly finalized during the meeting.
+2. DETAILED SUMMARY: Write a comprehensive, well-structured multi-paragraph narrative combining all key discussion points, context, decisions, and action items naturally into cohesive paragraphs separated by double line breaks (\n\n). Do NOT use bullet points, numbered lists, markdown headings (like # or **Topic:**), tables, or separate labeled sections.
+
+3. DECISIONS: Extract ONLY decisions that were explicitly agreed upon or clearly finalized during the meeting.
    A decision means "What did the team agree/finalize?" — NOT an action item.
    Return as an array of clear strings.
 
-3. ACTION ITEMS: Extract tasks that require someone to do something.
+4. ACTION ITEMS: Extract tasks that require someone to do something.
    - task: Exact description of what needs to be done
    - assignee: Always set to "-" (Do NOT assign any person's name automatically. All tasks must remain unassigned as "-" until the user explicitly assigns or delegates them).
    - due_date: In YYYY-MM-DD format if mentioned, or null if not
@@ -134,14 +145,14 @@ INSTRUCTIONS:
    - confidence: 90-100 if explicitly stated, 70-89 if implied, 50-69 if uncertain
    - status: "Pending"
 
-4. RISKS: Only include risks if the transcript discusses concerns, worries, or potential problems. Do NOT fabricate risks.
+5. RISKS: Only include risks if the transcript discusses concerns, worries, or potential problems. Do NOT fabricate risks.
 
-5. QUALITY SCORE: Rate 0-100 based on: Were decisions clear? Were action items assigned? Were deadlines set? Were priorities stated?
+6. QUALITY SCORE: Rate 0-100 based on: Were decisions clear? Were action items assigned? Were deadlines set? Were priorities stated?
 
 Return ONLY valid JSON with exactly this structure:
 {
-  "executive_summary": "Paragraph 1...\\n\\nParagraph 2...",
-  "detailed_summary": "Detailed multi-paragraph summary organized by topics",
+  "executive_summary": "First paragraph...\\n\\nSecond paragraph...\\n\\nThird paragraph...",
+  "detailed_summary": "First paragraph...\\n\\nSecond paragraph...\\n\\nThird paragraph...",
   "decisions": ["Decision 1 from transcript", "Decision 2 from transcript"],
   "action_items": [
     {
@@ -209,27 +220,46 @@ PROMPT;
     };
 
     // ============================================================
-    // STEP 4: CALL GEMINI API (with fallback model on 503/429/404)
+    // STEP 4: CALL GEMINI API (with automatic retry & model chain failover)
     // ============================================================
+    $modelChain = defined('GEMINI_MODEL_CHAIN') && is_array(GEMINI_MODEL_CHAIN)
+        ? GEMINI_MODEL_CHAIN
+        : [GEMINI_MODEL, 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+
+    $response = null;
+    $httpCode = 0;
+    $curlError = '';
     $activeModel = GEMINI_MODEL;
-    $apiUrl = GEMINI_API_URL . '?key=' . GEMINI_API_KEY;
+    $success = false;
 
-    list($response, $httpCode, $curlError) = $callGemini($apiUrl);
+    foreach ($modelChain as $modelCandidate) {
+        $targetUrl = 'https://generativelanguage.googleapis.com/v1beta/models/' . $modelCandidate . ':generateContent?key=' . GEMINI_API_KEY;
 
-    // If primary model failed with high demand (503) or rate limit (429) or not found (404), try fallback
-    if (($httpCode === 503 || $httpCode === 429 || $httpCode === 404) && defined('GEMINI_FALLBACK_API_URL')) {
-        error_log("[ANALYZE] Primary model " . GEMINI_MODEL . " returned HTTP $httpCode, attempting fallback: " . GEMINI_FALLBACK_MODEL);
-        $fallbackUrl = GEMINI_FALLBACK_API_URL . '?key=' . GEMINI_API_KEY;
-        list($fbResponse, $fbHttpCode, $fbCurlError) = $callGemini($fallbackUrl);
-        if ($fbHttpCode === 200) {
-            $response = $fbResponse;
-            $httpCode = $fbHttpCode;
-            $curlError = $fbCurlError;
-            $activeModel = GEMINI_FALLBACK_MODEL;
+        // Up to 2 attempts per model (initial + 1 retry on 503/429)
+        for ($attempt = 1; $attempt <= 2; $attempt++) {
+            error_log("[ANALYZE] Attempting Gemini model $modelCandidate (Attempt $attempt)");
+            list($response, $httpCode, $curlError) = $callGemini($targetUrl);
+
+            if ($httpCode === 200) {
+                $activeModel = $modelCandidate;
+                $success = true;
+                break 2; // Success! Break out of both retry loop and model chain
+            }
+
+            // If 503 (high demand) or 429 (rate limit), wait 500ms before retrying or failing over
+            if ($httpCode === 503 || $httpCode === 429) {
+                error_log("[ANALYZE] Model $modelCandidate returned HTTP $httpCode on attempt $attempt");
+                if ($attempt < 2) {
+                    usleep(500000); // 500ms pause before retry
+                }
+            } else {
+                // For non-retryable errors like 400, 401, 403, don't retry same model
+                break;
+            }
         }
     }
 
-    if ($curlError) {
+    if ($curlError && !$success) {
         error_log("[ANALYZE] cURL error: " . $curlError);
         if (ob_get_level() > 0) ob_clean();
         http_response_code(503);
@@ -242,19 +272,19 @@ PROMPT;
         exit;
     }
 
-    if ($httpCode !== 200) {
+    if (!$success || $httpCode !== 200) {
         $errorData = json_decode($response, true);
         $errorMsg = $errorData['error']['message'] ?? 'Unknown Gemini API error';
         $errorStatus = $errorData['error']['status'] ?? 'UNKNOWN';
 
-        error_log("[ANALYZE] Gemini API error: HTTP $httpCode - $errorMsg");
+        error_log("[ANALYZE] Gemini API error across all models: HTTP $httpCode - $errorMsg");
 
         $errorExplanation = match($httpCode) {
             400 => "Invalid request sent to Gemini. Check your prompt or configuration.",
             401, 403 => "API key authentication failed. Your key may be invalid or expired.",
             404 => "Model '$activeModel' not found. It may have been deprecated.",
             429 => "Rate limit exceeded. Too many requests have been sent. Please wait a minute and retry.",
-            500, 503 => "Gemini model is currently experiencing high demand. Please retry in a few seconds.",
+            500, 503 => "Gemini models are currently experiencing high demand. Please retry in a few seconds.",
             default => "Unexpected error from Gemini API."
         };
 
@@ -359,6 +389,30 @@ PROMPT;
     $detailedSummary = (!empty($analysisResult['detailed_summary']) && is_string($analysisResult['detailed_summary']))
         ? $analysisResult['detailed_summary']
         : $execSummary;
+
+    // STEP 7.5: Pass generated summary through dedicated review & cleaning engine
+    // Removes explicit, inappropriate, unwanted, or irrelevant content with minimum necessary edits,
+    // while strictly preserving all key decisions, tasks, deadlines, responsibilities, and context.
+    $cleanedSummaryPair = reviewAndCleanSummary($execSummary, $detailedSummary, function($url, $body) {
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $body,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_SSL_VERIFYPEER => false
+        ]);
+        $res = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err = curl_error($ch);
+        curl_close($ch);
+        return [$res, $code, $err];
+    });
+
+    $execSummary = $cleanedSummaryPair['executive_summary'];
+    $detailedSummary = $cleanedSummaryPair['detailed_summary'];
 
     // Decisions (safely convert string or object array to flat array of strings)
     $cleanDecisions = [];

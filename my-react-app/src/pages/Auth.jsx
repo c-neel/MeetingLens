@@ -56,40 +56,22 @@ export default function Auth() {
         ? { name, email, password } 
         : { email, password };
 
-      let userObj = null;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
 
-      try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
+      const data = await response.json();
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Something went wrong');
-        }
-        userObj = data.user;
-      } catch (networkErr) {
-        // If it's an explicit API response error (e.g. invalid password), rethrow it
-        if (networkErr.message && !networkErr.message.includes('fetch') && networkErr.message !== 'Failed to fetch') {
-          throw networkErr;
-        }
-        // Fallback for cloud/Vercel preview when PHP backend at localhost:8000 is unreachable
-        console.warn("Backend server at localhost:8000 unreachable. Using local demo session.");
-        userObj = {
-          id: 1,
-          name: isRegister ? name : (email.split('@')[0] || 'Amit Shah'),
-          email: email,
-          role: 'member'
-        };
+      if (!response.ok) {
+        throw new Error(data.message || 'Something went wrong');
       }
 
       // Store logged-in user in localStorage
-      localStorage.setItem('user', JSON.stringify(userObj));
+      localStorage.setItem('user', JSON.stringify(data.user));
       const redirectTo = localStorage.getItem('redirectAfterLogin') || '/dashboard';
       localStorage.removeItem('redirectAfterLogin');
       navigate(redirectTo);
@@ -108,39 +90,23 @@ export default function Auth() {
     const nameToUse = customName || (provider === 'google' ? 'Google User (Neel Contractor)' : 'GitHub User (Neel)');
 
     try {
-      let userObj = null;
-      try {
-        const response = await fetch('http://localhost:8000/api/users/social-login.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            provider,
-            email: emailToUse,
-            name: nameToUse
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || `Failed to sign in with ${provider}`);
-        }
-        userObj = data.user;
-      } catch (networkErr) {
-        if (networkErr.message && !networkErr.message.includes('fetch') && networkErr.message !== 'Failed to fetch') {
-          throw networkErr;
-        }
-        console.warn("Backend server at localhost:8000 unreachable. Using local social login session.");
-        userObj = {
-          id: provider === 'google' ? 101 : 102,
-          name: nameToUse,
+      const response = await fetch('http://localhost:8000/api/users/social-login.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider,
           email: emailToUse,
-          role: 'member',
-          provider
-        };
+          name: nameToUse
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || `Failed to sign in with ${provider}`);
       }
 
-      localStorage.setItem('user', JSON.stringify(userObj));
+      localStorage.setItem('user', JSON.stringify(data.user));
       setSocialModal(null);
       const redirectTo = localStorage.getItem('redirectAfterLogin') || '/dashboard';
       localStorage.removeItem('redirectAfterLogin');

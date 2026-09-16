@@ -229,45 +229,8 @@ export const getReportData = async (startDate, endDate, preset = 'quarter') => {
     if (!response.ok) throw new Error('Failed to generate report');
     return await response.json();
   } catch (error) {
-    console.warn("Backend reports API unreachable, generating client-side report from meetings & tasks");
-    const meetings = await getMeetings();
-    const tasks = await getActionItems();
-
-    const totalMeetings = meetings.length || 4;
-    const totalTasks = tasks.length || 6;
-    const completedTasks = tasks.filter(t => t.status === 'Completed').length || 3;
-    const pendingTasks = tasks.filter(t => t.status === 'Pending' || t.status === 'In Progress').length || (totalTasks - completedTasks);
-    const overdueTasks = tasks.filter(t => t.status !== 'Completed' && (t.dueDate || t.due_date) && new Date(t.dueDate || t.due_date) < new Date()).length || 1;
-    const completionPct = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 75;
-
-    return {
-      success: true,
-      user_name: user.name || 'Amit Shah',
-      user_role: user.role || 'member',
-      total_meetings: totalMeetings,
-      total_tasks: totalTasks,
-      completed_tasks: completedTasks,
-      pending_tasks: pendingTasks,
-      overdue_tasks: overdueTasks,
-      completion_pct: completionPct,
-      avg_confidence: 90,
-      productivity_score: 88,
-      trend: [
-        { period: 'Apr 2026', completion_rate: 70, total_tasks: 4, completed_tasks: 3 },
-        { period: 'May 2026', completion_rate: 75, total_tasks: 5, completed_tasks: 4 },
-        { period: 'Jun 2026', completion_rate: 80, total_tasks: 6, completed_tasks: 5 },
-        { period: 'Jul 2026', completion_rate: 85, total_tasks: 7, completed_tasks: 6 },
-        { period: 'Aug 2026', completion_rate: completionPct, total_tasks: totalTasks, completed_tasks: completedTasks }
-      ],
-      comparison: {
-        delta: {
-          meetings: 1,
-          tasks: 2,
-          completion_pct: 5,
-          overdue: -1
-        }
-      }
-    };
+    console.error("Report fetch error:", error);
+    throw error;
   }
 };
 
@@ -293,245 +256,36 @@ export const getReportCsvUrl = (startDate, endDate, preset = 'quarter') => {
   return `${BASE_URL}/reports/export_csv.php?${params.toString()}`;
 };
 
-// Helper generator for clean, professional client analysis
-const generateClientFallbackAnalysis = (transcriptText, meetingTitle) => {
-  const cleanTitle = meetingTitle || 'Meeting Analysis';
-  
-  // Clean raw transcript by removing metadata blocks, timestamps like [00:00:00], and speaker tags like **[04:25] Neel:**
-  let cleanText = (transcriptText || '')
-    .replace(/\*\*Meeting Title:\*\*.*$/gm, '')
-    .replace(/\*\*Date:\*\*.*$/gm, '')
-    .replace(/\*\*Duration:\*\*.*$/gm, '')
-    .replace(/\*\*Participants:\*\*.*$/gm, '')
-    .replace(/\[\d{2}:\d{2}(:\d{2})?\]/g, '')
-    .replace(/\*\*\d{2}:\d{2}(:\d{2})?\*\*/g, '')
-    .replace(/\*\*[^*]+:\*\*/g, '')
-    .replace(/^\s*[\r\n]/gm, '')
-    .trim();
-
-  // Extract meaningful sentences
-  const sentences = cleanText
-    .split(/(?<=[.!?])\s+/)
-    .map(s => s.trim())
-    .filter(s => s.length > 12 && !s.toLowerCase().includes('good evening') && !s.toLowerCase().includes('let\'s get started'));
-
-  // Decisions extraction — clean out speaker prefixes
-  const rawDecisions = sentences
-    .filter(s => /agree|decid|approve|confirm|select|choose|launch|final|store|complete/i.test(s))
-    .slice(0, 3)
-    .map(s => s.replace(/^(agreed|yes|sure|okay)[.,]?\s*/i, '').trim())
-    .filter(s => s.length > 10);
-
-  const decisions = rawDecisions.length > 0 ? rawDecisions : [
-    `Approved key project deliverables for ${cleanTitle}.`,
-    'Confirmed team roles and review timelines.',
-    'Finalized project mockups and task delegation.'
-  ];
-
-  // Action items extraction
-  const extractedTasks = sentences
-    .filter(s => /will|should|need|task|action|assign|todo|prepare|update|draft|review|fix|send|create|finalize/i.test(s))
-    .slice(0, 4)
-    .map(s => s.trim());
-
-  const actionItems = (extractedTasks.length > 0 ? extractedTasks : [
-    `Prepare project presentation and status report for ${cleanTitle}`,
-    'Update API and system documentation',
-    'Review timeline and milestone deliverables'
-  ]).map((t, idx) => ({
-    task: t.length > 90 ? t.substring(0, 90) + '...' : t,
-    assignee: '-',
-    dueDate: new Date(Date.now() + (idx + 3) * 86400000).toISOString().split('T')[0],
-    priority: idx === 0 ? 'High' : 'Medium',
-    status: 'Pending',
-    confidence: 85
-  }));
-
-  // Clean Executive Summary Formulation
-  const p1 = `The meeting focused on ${cleanTitle}. The participants reviewed current progress, evaluated ongoing deliverables, and discussed key operational targets.`;
-  
-  const p2 = sentences.length > 1 
-    ? `Key highlights discussed include: ${sentences.slice(0, 3).join(' ')}`
-    : `The team aligned on immediate action items, confirmed milestone schedules, and established clear task delegation for upcoming deliverables.`;
-
-  const summaryText = `${p1}\n\n${p2}`;
-
-  return {
-    executive_summary: summaryText,
-    detailed_summary: cleanText || summaryText,
-    summary: summaryText,
-    decisions,
-    actionItems,
-    risks: [
-      { text: 'Timeline dependency on key team approvals.', severity: 'Medium' },
-      { text: 'Resource allocation bottleneck during peak sprint.', severity: 'Low' }
-    ],
-    suggestions: [
-      { text: 'Schedule a brief follow-up sync mid-week to track progress.', category: 'process' },
-      { text: 'Ensure all assigned task deadlines are logged in task manager.', category: 'resource' }
-    ],
-    follow_ups: [],
-    ai_remarks: [],
-    quality_score: 85,
-    next_meeting_agenda: [],
-    ai_powered: true,
-    model: 'MeetingLens AI Engine'
-  };
-};
-
-// Direct client-side call to Google Gemini API when PHP backend at localhost:8000 is unreachable
-const callDirectGeminiAPI = async (transcriptText, meetingTitle) => {
-  const apiKey = (import.meta && import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || ['AQ.Ab8RN6Ia9gh5', 'FcjTyLs1', 'D3fL7WPfFoyg0IUsbBXsOAVMHG3g'].join('-');
-  
-  const systemPrompt = `You are an expert meeting intelligence assistant.
-
-Analyze ONLY the meeting transcript provided below.
-
-CRITICAL RULES:
-1. Do NOT invent information. Every fact must come from the transcript.
-2. Do NOT use generic meeting language. Be specific to THIS transcript.
-3. Do NOT assume facts that are not present in the transcript.
-4. If information is not present, use null or "Not specified".
-5. Never invent names, dates, decisions, tasks, or priorities.
-
-INSTRUCTIONS:
-
-1. EXECUTIVE SUMMARY: Write exactly TWO paragraphs (separated by \\n\\n).
-   - Paragraph 1: The purpose of the meeting, who participated, and the main topic discussed.
-   - Paragraph 2: The specific outcomes — what was decided, what commitments were made, key dates and budget figures mentioned.
-   Every important statement MUST come from the transcript.
-
-2. DECISIONS: Extract ONLY decisions that were explicitly agreed upon or clearly finalized during the meeting.
-   Return as an array of clear strings.
-
-3. ACTION ITEMS: Extract tasks that require someone to do something.
-   - task: Exact description of what needs to be done
-   - assignee: Always set to "-"
-   - due_date: In YYYY-MM-DD format if mentioned, or null if not
-   - priority: Use ONLY what transcript says ("High", "Medium", "Low", or "Not specified")
-   - confidence: 90-100 if explicitly stated, 70-89 if implied, 50-69 if uncertain
-   - status: "Pending"
-
-4. RISKS: Only include risks if the transcript discusses concerns or problems.
-
-5. QUALITY SCORE: Rate 0-100 based on clarity of decisions, tasks, deadlines.
-
-Return ONLY valid JSON with exactly this structure:
-{
-  "executive_summary": "Paragraph 1...\\n\\nParagraph 2...",
-  "detailed_summary": "Detailed summary...",
-  "decisions": ["Decision 1"],
-  "action_items": [
-    {
-      "task": "...",
-      "assignee": "-",
-      "due_date": "YYYY-MM-DD or null",
-      "priority": "High, Medium, Low, or Not specified",
-      "confidence": 85,
-      "status": "Pending"
-    }
-  ],
-  "risks": [{"text": "...", "severity": "Medium"}],
-  "suggestions": [{"text": "...", "category": "process"}],
-  "quality_score": 85
-}`;
-
-  const userMessage = systemPrompt + "\n\n--- MEETING TRANSCRIPT ---\nTitle: " + (meetingTitle || 'Untitled Meeting') + "\n\n" + transcriptText + "\n--- END TRANSCRIPT ---";
-
-  // Fast, widely active Gemini models
-  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-flash-latest'];
-
-  for (const model of models) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout per model
-
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: userMessage }] }],
-          generationConfig: {
-            temperature: 0.2,
-            responseMimeType: 'application/json'
-          }
-        })
-      });
-      clearTimeout(timeoutId);
-
-      if (!res.ok) continue;
-
-      const data = await res.json();
-      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) continue;
-
-      const cleanJson = rawText.trim().replace(/^```json/i, '').replace(/```$/i, '').trim();
-      const parsed = JSON.parse(cleanJson);
-
-      return {
-        executive_summary: parsed.executive_summary || parsed.summary || '',
-        detailed_summary: parsed.detailed_summary || parsed.executive_summary || '',
-        summary: parsed.executive_summary || parsed.summary || '',
-        decisions: parsed.decisions || [],
-        actionItems: (parsed.action_items || parsed.actionItems || []).map(item => ({
-          task: item.task || 'Untitled task',
-          assignee: '-',
-          dueDate: item.due_date || item.dueDate || null,
-          priority: item.priority || 'Not specified',
-          status: item.status || 'Pending',
-          confidence: item.confidence || 85
-        })),
-        risks: (parsed.risks || []).map(r => ({
-          text: typeof r === 'string' ? r : (r.text || r.risk_text || ''),
-          severity: r.severity || 'Medium'
-        })),
-        suggestions: (parsed.suggestions || []).map(s => ({
-          text: typeof s === 'string' ? s : (s.text || s.suggestion_text || ''),
-          category: s.category || 'process'
-        })),
-        quality_score: parsed.quality_score || 85,
-        ai_powered: true,
-        model: `Google Gemini AI (${model})`
-      };
-    } catch (e) {
-      clearTimeout(timeoutId);
-      console.warn(`Direct Gemini API call failed or timed out for model ${model}:`, e);
-    }
-  }
-
-  // Instant fallback to client analysis if direct API calls time out
-  return generateClientFallbackAnalysis(transcriptText, meetingTitle);
-};
-
 // ==================== AI PROCESSING ====================
+// This function NEVER silently falls back to mock data.
+// It either returns real AI results or throws an error object.
 export const processTranscript = async (transcriptText, meetingTitle) => {
   // Diagnostic logging
   console.log('[AI Pipeline] Starting analysis...');
   console.log('[AI Pipeline] Meeting title:', meetingTitle);
-  console.log('[AI Pipeline] Transcript length:', transcriptText ? transcriptText.length : 0, 'characters');
+  console.log('[AI Pipeline] Transcript length:', transcriptText.length, 'characters');
+  console.log('[AI Pipeline] Transcript first 500 chars:', transcriptText.substring(0, 500));
 
-  // Call the PHP backend with a fast 2.5s timeout
+  // Call the PHP backend — the ONLY path to Gemini
   let response;
-  const phpController = new AbortController();
-  const phpTimeoutId = setTimeout(() => phpController.abort(), 2500);
-
   try {
     response = await fetch(`${BASE_URL}/analyze/index.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      signal: phpController.signal,
       body: JSON.stringify({
         transcript: transcriptText,
         title: meetingTitle || 'Untitled Meeting'
       })
     });
-    clearTimeout(phpTimeoutId);
   } catch (networkError) {
-    clearTimeout(phpTimeoutId);
-    console.warn('[AI Pipeline] Backend server at localhost:8000 unreachable or timed out. Calling direct Gemini API:', networkError.message);
-    return await callDirectGeminiAPI(transcriptText, meetingTitle);
+    // Network error — backend not running
+    console.error('[AI Pipeline] Network error — backend not reachable:', networkError.message);
+    throw {
+      error_type: 'BACKEND_UNREACHABLE',
+      message: 'Cannot connect to the backend server at localhost:8000. Start the PHP backend with: C:\\xampp\\php\\php.exe -S localhost:8000 -t backend',
+      http_code: 0,
+      details: networkError.message
+    };
   }
 
   console.log('[AI Pipeline] Backend response HTTP status:', response.status);
@@ -550,26 +304,44 @@ export const processTranscript = async (transcriptText, meetingTitle) => {
       try {
         result = JSON.parse(jsonMatch[0]);
       } catch (innerError) {
-        // Fallback
+        // Fallback to error below
       }
     }
 
     if (!result) {
-      console.warn('[AI Pipeline] Backend response was not valid JSON. Calling direct Gemini API.');
-      return await callDirectGeminiAPI(transcriptText, meetingTitle);
+      console.error('[AI Pipeline] Could not parse backend response as JSON. Raw response:', rawText);
+      const snippet = rawText.length > 200 ? rawText.substring(0, 200) + '...' : rawText;
+      throw {
+        error_type: 'INVALID_BACKEND_RESPONSE',
+        message: snippet ? `Backend response was not valid JSON: ${snippet}` : 'Backend returned an empty response. Check server logs.',
+        http_code: response.status,
+        details: parseError.message
+      };
     }
   }
 
   // If the backend returned an error (non-200 status or error fields)
-  if (!response.ok || result.error_type || (result.fallback === false && result.message)) {
-    console.warn('[AI Pipeline] Backend returned error. Calling direct Gemini API:', result);
-    return await callDirectGeminiAPI(transcriptText, meetingTitle);
+  if (!response.ok || result.error_type || result.fallback === false && result.message) {
+    console.error('[AI Pipeline] Backend returned error:', result);
+    throw {
+      error_type: result.error_type || 'BACKEND_ERROR',
+      message: result.message || 'Unknown backend error',
+      http_code: result.http_code || response.status,
+      error: result.error || null,
+      model: result.model || null,
+      api_key_found: result.api_key_found,
+      details: result
+    };
   }
 
   // Success — format and return the AI result
   console.log('[AI Pipeline] ✅ AI analysis successful');
   console.log('[AI Pipeline] Model:', result.model);
+  console.log('[AI Pipeline] AI powered:', result.ai_powered);
+  console.log('[AI Pipeline] Decisions count:', result.decisions?.length);
+  console.log('[AI Pipeline] Action items count:', result.action_items?.length);
 
+  // Map action_items from backend format to frontend format (default to '-' unassigned)
   const actionItems = (result.action_items || []).map(item => ({
     task: item.task || 'Untitled task',
     assignee: '-',
@@ -723,59 +495,16 @@ function getMockActionItems() {
       { id: 7, user_id: 5, meeting_id: 5, task: 'Fix payment bug #102', assignee: 'Vikram Singh', dueDate: '2026-08-09', due_date: '2026-08-09', priority: 'High', status: 'Completed', confidence: 95, meeting_title: 'Quarterly Business Review' },
     ];
   }
-
-  const customTasks = [];
-  customMockMeetings.forEach(m => {
-    if (m.actionItems && Array.isArray(m.actionItems)) {
-      m.actionItems.forEach((t, i) => {
-        customTasks.push({
-          id: t.id || (m.id * 10 + i),
-          user_id: m.user_id || userId,
-          meeting_id: m.id,
-          meeting_title: m.title,
-          task: t.task,
-          assignee: t.assignee || '-',
-          dueDate: t.dueDate || t.due_date || null,
-          due_date: t.dueDate || t.due_date || null,
-          priority: t.priority || 'Medium',
-          status: t.status || 'Pending',
-          confidence: t.confidence || 85
-        });
-      });
-    }
-  });
-
-  const all = [...customTasks, ...cachedMockActionItems];
-  return all.filter(i => parseInt(i.user_id) === parseInt(userId));
+  return cachedMockActionItems.filter(i => parseInt(i.user_id) === parseInt(userId));
 }
 
 function updateMockActionItem(id, data) {
-  const targetId = parseInt(id);
   if (cachedMockActionItems) {
-    const index = cachedMockActionItems.findIndex(i => parseInt(i.id) === targetId);
-    if (index !== -1) {
-      if (data.status) cachedMockActionItems[index].status = data.status;
-      if (data.assignee) cachedMockActionItems[index].assignee = data.assignee;
-      if (data.due_date) {
-        cachedMockActionItems[index].due_date = data.due_date;
-        cachedMockActionItems[index].dueDate = data.due_date;
-      }
+    const index = cachedMockActionItems.findIndex(i => i.id === parseInt(id));
+    if (index !== -1 && data.status) {
+      cachedMockActionItems[index].status = data.status;
     }
   }
-  customMockMeetings.forEach(m => {
-    if (m.actionItems && Array.isArray(m.actionItems)) {
-      m.actionItems.forEach(t => {
-        if (parseInt(t.id) === targetId) {
-          if (data.status) t.status = data.status;
-          if (data.assignee) t.assignee = data.assignee;
-          if (data.due_date) {
-            t.due_date = data.due_date;
-            t.dueDate = data.due_date;
-          }
-        }
-      });
-    }
-  });
 }
 
 function getMockDocuments() {
