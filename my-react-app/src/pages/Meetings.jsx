@@ -24,6 +24,28 @@ export default function Meetings() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
 
+  const [savedIds, setSavedIds] = useState(() => {
+    try {
+      const stored = localStorage.getItem('meetinglens_saved_ids');
+      return stored ? JSON.parse(stored) : [1, 2];
+    } catch {
+      return [1, 2];
+    }
+  });
+
+  const toggleSaveMeeting = (e, id) => {
+    if (e) e.stopPropagation();
+    setSavedIds(prev => {
+      const next = prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id];
+      try {
+        localStorage.setItem('meetinglens_saved_ids', JSON.stringify(next));
+      } catch (err) {
+        console.error(err);
+      }
+      return next;
+    });
+  };
+
   useEffect(() => {
     getMeetings().then(data => {
       const sorted = [...data].sort((a, b) => {
@@ -76,7 +98,8 @@ export default function Meetings() {
   const startIdx = (currentPage - 1) * ITEMS_PER_PAGE + 1;
   const endIdx = Math.min(currentPage * ITEMS_PER_PAGE, filteredMeetings.length);
 
-  const pinnedMeetings = meetings.slice(0, 2);
+  const userSavedMeetings = meetings.filter(m => savedIds.includes(m.id));
+  const pinnedMeetings = (userSavedMeetings.length > 0 ? userSavedMeetings : meetings).slice(0, 2);
 
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredMeetings.length) {
@@ -308,50 +331,38 @@ export default function Meetings() {
                   <div style={{ position: 'absolute', top: 0, right: 0, width: '240px', height: '120px', background: 'radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent 70%)', pointerEvents: 'none' }} />
 
                   <div>
-                    {/* Header Bar with Status, Type, and Pin */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.125rem 0.625rem', borderRadius: '9999px', backgroundColor: index === 0 ? '#e0e7ff' : '#f1f5f9', color: index === 0 ? '#4338ca' : '#334155', fontSize: '0.75rem', fontWeight: 700 }}>
-                          {meeting.source === 'voice' ? <Mic style={{ width: '13px', height: '13px' }} /> : <Video style={{ width: '13px', height: '13px' }} />}
-                          {meeting.source === 'voice' ? 'Live Audio' : 'Recorded Meeting'}
-                        </span>
-                        <span style={{ padding: '0.125rem 0.5rem', borderRadius: '0.25rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', fontSize: '0.6875rem', fontFamily: 'monospace', color: '#64748b' }}>
-                          S{44 - index}-KICKOFF
-                        </span>
+                    {/* Header Bar with Title, Save Pin, and Status */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                      <div style={{ flex: 1, overflow: 'hidden' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.125rem 0.625rem', borderRadius: '9999px', backgroundColor: index === 0 ? '#e0e7ff' : '#f1f5f9', color: index === 0 ? '#4338ca' : '#334155', fontSize: '0.75rem', fontWeight: 700 }}>
+                            {meeting.source === 'voice' ? <Mic style={{ width: '13px', height: '13px' }} /> : <Video style={{ width: '13px', height: '13px' }} />}
+                            {meeting.source === 'voice' ? 'Live Audio' : 'Recorded Meeting'}
+                          </span>
+                        </div>
+                        <h3 
+                          onClick={() => navigate(`/meetings/${meeting.id}`)}
+                          style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0f172a', cursor: 'pointer', margin: 0, lineHeight: 1.35 }}
+                          onMouseOver={(e) => e.currentTarget.style.color = '#4f46e5'}
+                          onMouseOut={(e) => e.currentTarget.style.color = '#0f172a'}
+                        >
+                          {meeting.title || 'Untitled Meeting'}
+                        </h3>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4f46e5', padding: '0.25rem' }}>
-                          <Bookmark style={{ width: '16px', height: '16px', fill: '#4f46e5' }} />
-                        </button>
-                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '0.25rem' }}>
-                          <MoreVertical style={{ width: '16px', height: '16px' }} />
-                        </button>
-                      </div>
+                      <button 
+                        title={savedIds.includes(meeting.id) ? "Unsave Session" : "Save Session"}
+                        onClick={(e) => toggleSaveMeeting(e, meeting.id)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: savedIds.includes(meeting.id) ? '#4f46e5' : '#cbd5e1', padding: '0.25rem', flexShrink: 0 }}
+                      >
+                        <Bookmark style={{ width: '18px', height: '18px', fill: savedIds.includes(meeting.id) ? '#4f46e5' : 'none' }} />
+                      </button>
                     </div>
 
-                    {/* Meeting Title */}
-                    <h3 
-                      onClick={() => navigate(`/meetings/${meeting.id}`)}
-                      style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0f172a', cursor: 'pointer', margin: '0 0 0.5rem 0', lineHeight: 1.35 }}
-                      onMouseOver={(e) => e.currentTarget.style.color = '#4f46e5'}
-                      onMouseOut={(e) => e.currentTarget.style.color = '#0f172a'}
-                    >
-                      {meeting.title || 'Untitled Meeting'}
-                    </h3>
-
                     {/* Meta Stack */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', fontSize: '0.75rem', color: '#64748b', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                        <Calendar style={{ width: '14px', height: '14px' }} /> {meeting.date || meeting.meeting_date || 'Oct 24, 2024'}
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                        <Clock style={{ width: '14px', height: '14px' }} /> {meeting.duration || '48 mins'}
-                      </span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                        <Users style={{ width: '14px', height: '14px' }} />
-                        <span>{Array.isArray(meeting.participants) ? meeting.participants.length : (meeting.participants || '6')} participants</span>
-                      </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: '#64748b', marginBottom: '0.875rem' }}>
+                      <Calendar style={{ width: '14px', height: '14px' }} />
+                      <span>{meeting.date || meeting.meeting_date || 'Oct 24, 2024'}</span>
                     </div>
 
 
@@ -472,9 +483,9 @@ export default function Meetings() {
                   }}
                 >
                   <div>
-                    {/* Card Header Strip */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {/* Header Strip with Title & Bookmark */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.375rem' }}>
+                      <div style={{ flex: 1, overflow: 'hidden' }}>
                         {isVoice && (
                           <span style={{ 
                             display: 'inline-flex', 
@@ -485,53 +496,33 @@ export default function Meetings() {
                             fontSize: '0.7rem', 
                             fontWeight: 700, 
                             backgroundColor: '#fee2e2', 
-                            color: '#dc2626' 
+                            color: '#dc2626',
+                            marginBottom: '0.375rem'
                           }}>
                             <Mic style={{ width: '12px', height: '12px' }} />
                             Live Voice
                           </span>
                         )}
+                        <h3 
+                          style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: 0, lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                        >
+                          {meeting.title || 'Untitled Meeting'}
+                        </h3>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: index < 2 ? '#4f46e5' : '#cbd5e1', padding: '0.2rem' }}
-                        >
-                          <Bookmark style={{ width: '15px', height: '15px', fill: index < 2 ? '#4f46e5' : 'none' }} />
-                        </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '0.2rem' }}
-                        >
-                          <MoreVertical style={{ width: '15px', height: '15px' }} />
-                        </button>
-                      </div>
+                      <button 
+                        title={savedIds.includes(meeting.id) ? "Unsave Meeting" : "Save Meeting"}
+                        onClick={(e) => toggleSaveMeeting(e, meeting.id)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: savedIds.includes(meeting.id) ? '#4f46e5' : '#cbd5e1', padding: '0.2rem', flexShrink: 0 }}
+                      >
+                        <Bookmark style={{ width: '16px', height: '16px', fill: savedIds.includes(meeting.id) ? '#4f46e5' : 'none' }} />
+                      </button>
                     </div>
 
-                    {/* Meeting Title */}
-                    <h3 
-                      style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.375rem 0', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-                    >
-                      {meeting.title || 'Untitled Meeting'}
-                    </h3>
-
                     {/* Meta Stack */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          <Calendar style={{ width: '13px', height: '13px' }} /> {meeting.date || meeting.meeting_date || 'Oct 21'}
-                        </span>
-                        <span>•</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          <Clock style={{ width: '13px', height: '13px' }} /> {meeting.duration || '42m'}
-                        </span>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                        <Users style={{ width: '13px', height: '13px' }} />
-                        <span>{Array.isArray(meeting.participants) ? meeting.participants.length : (meeting.participants || '4')} attend</span>
-                      </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: '#64748b', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
+                      <Calendar style={{ width: '13px', height: '13px' }} />
+                      <span>{meeting.date || meeting.meeting_date || 'Oct 21'}</span>
                     </div>
 
 

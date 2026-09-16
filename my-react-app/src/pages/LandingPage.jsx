@@ -11,6 +11,16 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState(0);
 
+  const handleProtectedRoute = (targetPath) => {
+    const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    if (savedUser && (savedUser.id || savedUser.email)) {
+      navigate(targetPath);
+    } else {
+      localStorage.setItem('redirectAfterLogin', targetPath);
+      navigate('/login');
+    }
+  };
+
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
   };
@@ -180,7 +190,7 @@ export default function LandingPage() {
                   <ArrowRight size={18} />
                 </button>
                 <button 
-                  onClick={() => navigate('/voice-meeting')}
+                  onClick={() => handleProtectedRoute('/voice-meeting')}
                   style={{ 
                     padding: '14px 24px', 
                     borderRadius: '0.75rem', 
@@ -698,43 +708,7 @@ export default function LandingPage() {
 
         </div>
 
-        {/* Testimonials Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-          
-          <div style={{ padding: '1.5rem', borderRadius: '1rem', backgroundColor: '#ffffff', border: '1px solid rgba(199, 196, 216, 0.6)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: '14px', color: '#131b2e', fontStyle: 'italic', lineHeight: 1.6 }}>"MeetingLens eliminated 4 hours of weekly status alignment. Having this 100% free is game changing."</p>
-            <div style={{ marginTop: '1.25rem', paddingTop: '0.75rem', borderTop: '1px solid #f2f3ff', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ width: '34px', height: '34px', borderRadius: '50%', backgroundColor: '#3525cd', color: '#ffffff', fontWeight: 700, fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>MS</div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#131b2e' }}>Marcus Sterling</div>
-                <div style={{ fontSize: '11px', color: '#464555', fontFamily: 'monospace' }}>Head of Product, Ramp</div>
-              </div>
-            </div>
-          </div>
 
-          <div style={{ padding: '1.5rem', borderRadius: '1rem', backgroundColor: '#ffffff', border: '1px solid rgba(199, 196, 216, 0.6)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: '14px', color: '#131b2e', fontStyle: 'italic', lineHeight: 1.6 }}>"The Linear integration is pure magic. Action items discussed on Tuesday are deployed by Thursday."</p>
-            <div style={{ marginTop: '1.25rem', paddingTop: '0.75rem', borderTop: '1px solid #f2f3ff', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ width: '34px', height: '34px', borderRadius: '50%', backgroundColor: '#0058be', color: '#ffffff', fontWeight: 700, fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>ER</div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#131b2e' }}>Elena Rostova</div>
-                <div style={{ fontSize: '11px', color: '#464555', fontFamily: 'monospace' }}>VP of Engineering, Datadog</div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ padding: '1.5rem', borderRadius: '1rem', backgroundColor: '#ffffff', border: '1px solid rgba(199, 196, 216, 0.6)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: '14px', color: '#131b2e', fontStyle: 'italic', lineHeight: 1.6 }}>"The automated synthesis is flawless and zero data retention satisfies our strict compliance standards."</p>
-            <div style={{ marginTop: '1.25rem', paddingTop: '0.75rem', borderTop: '1px solid #f2f3ff', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ width: '34px', height: '34px', borderRadius: '50%', backgroundColor: '#006e4b', color: '#ffffff', fontWeight: 700, fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>DV</div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#131b2e' }}>David Vance</div>
-                <div style={{ fontSize: '11px', color: '#464555', fontFamily: 'monospace' }}>Chief of Staff, Brex</div>
-              </div>
-            </div>
-          </div>
-
-        </div>
       </section>
 
       {/* COMPACT FAQ ACCORDION */}
@@ -870,65 +844,101 @@ export default function LandingPage() {
       <footer style={{ width: '100%', backgroundColor: '#ffffff', borderTop: '1px solid #e2e7ff', paddingTop: '3.5rem', paddingBottom: '2.5rem' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem' }}>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem', paddingBottom: '2.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '2.5rem', paddingBottom: '2.5rem' }}>
             
-            {/* Column 1: Brand */}
-            <div style={{ gridColumn: 'span 2' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            {/* Column 1: Brand & Status */}
+            <div>
+              <div 
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', cursor: 'pointer' }}
+                title="Scroll to top"
+              >
                 <img src="/logo.png" alt="MeetingLens Logo" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
               </div>
-              <p style={{ fontSize: '13px', color: '#464555', maxWidth: '320px', lineHeight: 1.6, marginBottom: '1rem' }}>
+              <p style={{ fontSize: '13px', color: '#464555', maxWidth: '300px', lineHeight: 1.6, marginBottom: '1rem' }}>
                 Enterprise-grade meeting intelligence and autonomous execution, 100% free for everyone.
               </p>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 12px', borderRadius: '9999px', backgroundColor: '#faf8ff', border: '1px solid #e2e7ff' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 12px', borderRadius: '9999px', backgroundColor: '#faf8ff', border: '1px solid #e2e7ff', marginBottom: '0.75rem' }}>
                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>
                 <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#464555' }}>All systems operational</span>
               </div>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>
+                Zero Data Retention • Private & Secure
+              </div>
             </div>
 
-            {/* Column 2: Product */}
+            {/* Column 2: Product Capabilities */}
             <div>
               <h4 style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#131b2e', marginBottom: '1rem' }}>Product</h4>
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', fontSize: '13px', color: '#464555' }}>
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', fontSize: '13px', color: '#464555', listStyle: 'none', padding: 0, margin: 0 }}>
                 <li style={{ cursor: 'pointer' }} onClick={() => scrollToSection('features')}>Real-time Diarization</li>
                 <li style={{ cursor: 'pointer' }} onClick={() => scrollToSection('features')}>Linear & Notion Sync</li>
                 <li style={{ cursor: 'pointer' }} onClick={() => scrollToSection('features')}>Action Extraction</li>
                 <li style={{ cursor: 'pointer' }} onClick={() => scrollToSection('features')}>Calendar Integration</li>
+                <li style={{ cursor: 'pointer' }} onClick={() => scrollToSection('features')}>Executive Briefs</li>
               </ul>
             </div>
 
-            {/* Column 3: Resources */}
+            {/* Column 3: Platform Integrations (Static Informative Specs) */}
             <div>
-              <h4 style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#131b2e', marginBottom: '1rem' }}>Resources</h4>
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', fontSize: '13px', color: '#464555' }}>
-                <li style={{ cursor: 'pointer' }}>Documentation</li>
-                <li style={{ cursor: 'pointer' }}>API Reference</li>
-                <li style={{ cursor: 'pointer' }}>Privacy & Security</li>
-                <li style={{ cursor: 'pointer' }}>Community</li>
+              <h4 style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#131b2e', marginBottom: '1rem' }}>Integrations</h4>
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', fontSize: '13px', color: '#464555', listStyle: 'none', padding: 0, margin: 0 }}>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#3525cd' }}></span>
+                  Google Meet & Zoom
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#0058be' }}></span>
+                  Microsoft Teams
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#4f46e5' }}></span>
+                  Linear Sprint Boards
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#0f172a' }}></span>
+                  Notion Workspace Docs
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#006e4b' }}></span>
+                  Google Calendar & iCal
+                </li>
               </ul>
             </div>
 
-            {/* Column 4: Company */}
+            {/* Column 4: Quick App Links (Working Routes) */}
             <div>
-              <h4 style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#131b2e', marginBottom: '1rem' }}>Company</h4>
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', fontSize: '13px', color: '#464555' }}>
-                <li style={{ cursor: 'pointer' }}>About Us</li>
-                <li style={{ cursor: 'pointer' }} onClick={() => scrollToSection('free-forever')}>Why Free?</li>
-                <li style={{ cursor: 'pointer' }}>Privacy Policy</li>
-                <li style={{ cursor: 'pointer' }}>Terms of Service</li>
+              <h4 style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#131b2e', marginBottom: '1rem' }}>Quick Access</h4>
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', fontSize: '13px', color: '#464555', listStyle: 'none', padding: 0, margin: 0, marginBottom: '1rem' }}>
+                <li style={{ cursor: 'pointer', fontWeight: 600, color: '#3525cd' }} onClick={() => handleProtectedRoute('/voice-meeting')}>Start Live Voice Meeting →</li>
+                <li style={{ cursor: 'pointer' }} onClick={() => handleProtectedRoute('/analyze')}>Analyze Meeting Audio</li>
+                <li style={{ cursor: 'pointer' }} onClick={() => handleProtectedRoute('/dashboard')}>Workspace Dashboard</li>
+                <li style={{ cursor: 'pointer' }} onClick={() => navigate('/login')}>Sign In / Register</li>
               </ul>
+              <button
+                onClick={() => navigate('/login')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '9999px',
+                  backgroundColor: '#3525cd',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(53, 37, 205, 0.25)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Get Started Free
+              </button>
             </div>
 
           </div>
 
           {/* Bottom Bar */}
-          <div style={{ paddingTop: '1.5rem', borderTop: '1px solid #e2e7ff', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', fontSize: '13px', color: '#464555' }}>
-            <p>© 2026 MeetingLens Inc. 100% Free Forever.</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-              <span>SOC-2 Type II</span>
-              <span>HIPAA Compliant</span>
-              <span>GDPR Ready</span>
-            </div>
+          <div style={{ paddingTop: '1.5rem', borderTop: '1px solid #e2e7ff', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '1rem', fontSize: '13px', color: '#464555' }}>
+            <p style={{ margin: 0 }}>© 2026 MeetingLens Inc. 100% Free Forever.</p>
           </div>
 
         </div>

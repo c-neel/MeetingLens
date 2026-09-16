@@ -125,7 +125,7 @@ export default function Dashboard() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <button 
-            onClick={() => navigate('/online-meeting')}
+            onClick={() => navigate('/voice-meeting')}
             style={{ 
               display: 'inline-flex', 
               alignItems: 'center', 
@@ -141,8 +141,8 @@ export default function Dashboard() {
               boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)'
             }}
           >
-            <Video style={{ width: '16px', height: '16px', color: '#64748b' }} />
-            <span>Schedule Online Meeting</span>
+            <Mic style={{ width: '16px', height: '16px', color: '#ef4444' }} />
+            <span>Schedule Voice Meeting</span>
           </button>
           <button 
             onClick={() => navigate('/analyze')}

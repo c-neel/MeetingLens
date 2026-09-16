@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { LayoutDashboard, PlusCircle, Mic, Calendar, CheckSquare, FileBarChart, Settings, Globe, Zap } from 'lucide-react';
-import { getMeetings, getActionItems } from '../services/api';
+import { getMeetings, getActionItems, getApiUsage } from '../services/api';
 
 export default function Sidebar() {
   const [meetingsCount, setMeetingsCount] = useState(0);
   const [pendingTasksCount, setPendingTasksCount] = useState(0);
+  const [aiUsage, setAiUsage] = useState({ used_hours: 4.2, max_hours: 10, percentage: 42 });
 
   useEffect(() => {
     let isMounted = true;
@@ -28,6 +29,18 @@ export default function Sidebar() {
               return a === full || a === first || a.includes(first) || full.includes(a);
             }).length;
             setPendingTasksCount(pending);
+          }
+        })
+        .catch(() => {});
+
+      getApiUsage()
+        .then(data => {
+          if (isMounted && data && data.success) {
+            setAiUsage({
+              used_hours: data.used_hours,
+              max_hours: data.max_hours,
+              percentage: data.percentage
+            });
           }
         })
         .catch(() => {});
@@ -118,14 +131,14 @@ export default function Sidebar() {
       </nav>
 
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {/* Usage Card matching reference */}
+        {/* Usage Card displaying real-time Gemini API transcription usage */}
         <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.75rem', padding: '0.875rem 1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#334155' }}>AI Transcription</span>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4f46e5' }}>4.2 / 10 hrs</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4f46e5' }}>{aiUsage.used_hours} / {aiUsage.max_hours} hrs</span>
           </div>
           <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden', marginBottom: '0.5rem' }}>
-            <div style={{ width: '42%', height: '100%', backgroundColor: '#4f46e5', borderRadius: '9999px' }} />
+            <div style={{ width: `${aiUsage.percentage}%`, height: '100%', backgroundColor: '#4f46e5', borderRadius: '9999px', transition: 'width 0.3s ease' }} />
           </div>
           <Link to="/settings" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4f46e5', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
             Manage Plan →

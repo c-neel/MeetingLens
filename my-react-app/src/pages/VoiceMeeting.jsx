@@ -574,14 +574,16 @@ export default function VoiceMeeting() {
 
                   {/* Approval & Delegation Buttons */}
                   <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center', flexShrink: 0 }}>
-                    <button 
-                      type="button"
-                      className={`btn ${taskStatus === 'approved' ? 'btn-success' : 'btn-outline'}`}
-                      style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                      onClick={() => handleApproveAndDelegate(idx)}
-                    >
-                      <Check className="w-3.5 h-3.5" /> Approve & Delegate
-                    </button>
+                    {(!item.assignee || ['unassigned', 'none', 'not specified', '-', ''].includes(String(item.assignee).trim().toLowerCase())) && !isAssignedToMe && (
+                      <button 
+                        type="button"
+                        className={`btn ${taskStatus === 'approved' ? 'btn-success' : 'btn-outline'}`}
+                        style={{ padding: '0.375rem 0.625rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                        onClick={() => handleApproveAndDelegate(idx)}
+                      >
+                        <Check className="w-3.5 h-3.5" /> Approve & Delegate
+                      </button>
+                    )}
 
                     <button 
                       type="button"

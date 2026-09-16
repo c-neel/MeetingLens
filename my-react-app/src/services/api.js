@@ -374,7 +374,7 @@ export const processTranscript = async (transcriptText, meetingTitle) => {
   };
 };
 
-// ==================== GEMINI CONNECTION TEST ====================
+// ==================== GEMINI CONNECTION TEST & USAGE ====================
 export const testGeminiConnection = async () => {
   try {
     const response = await fetch(`${BASE_URL}/test-connection.php`);
@@ -388,6 +388,31 @@ export const testGeminiConnection = async () => {
     };
   }
 };
+
+export const getApiUsage = async () => {
+  const user = getLoggedInUser();
+  const userIdParam = user.id ? `?user_id=${user.id}` : '';
+  try {
+    const response = await fetch(`${BASE_URL}/analyze/usage.php${userIdParam}`);
+    if (!response.ok) throw new Error('API usage error');
+    return await response.json();
+  } catch (error) {
+    console.warn("Backend usage API unavailable, calculating from meetings");
+    const meetings = await getMeetings();
+    const count = meetings.length;
+    const hours = Math.round((count * 0.84) * 10) / 10;
+    return {
+      success: true,
+      used_hours: hours,
+      max_hours: 10.0,
+      percentage: Math.min(100, Math.round((hours / 10.0) * 100)),
+      api_key_configured: true,
+      model: 'gemini-3.5-flash',
+      meetings_count: count
+    };
+  }
+};
+
 
 // ==================== MOCK DATA FALLBACKS ====================
 // Mock storage for newly created meetings when offline

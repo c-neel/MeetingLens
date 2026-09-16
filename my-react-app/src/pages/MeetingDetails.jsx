@@ -434,22 +434,28 @@ export default function MeetingDetails() {
                 </tr>
               </thead>
               <tbody>
-                {meeting.actionItems?.map((item, idx) => (
-                  <tr key={idx}>
-                    <td style={{ fontWeight: 500 }}>{item.task}</td>
-                    <td>{formatAssignee(item.assignee)}</td>
-                    <td>{(item.dueDate && item.dueDate !== 'No Deadline' && item.dueDate !== 'null' && item.dueDate !== '-') ? item.dueDate : (item.due_date && item.due_date !== 'No Deadline' && item.due_date !== 'null' && item.due_date !== '-') ? item.due_date : 'No Deadline'}</td>
-                    <td style={{ textAlign: 'right' }}>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        style={{ fontSize: '0.75rem' }}
-                        onClick={() => handleApproveTask({ ...item, meeting_title: meeting.title })}
-                      >
-                        <Send className="w-3 h-3" /> Approve & Delegate
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {meeting.actionItems?.map((item, idx) => {
+                  const assigneeText = formatAssignee(item.assignee);
+                  const isAssigned = assigneeText !== '-';
+                  return (
+                    <tr key={idx}>
+                      <td style={{ fontWeight: 500 }}>{item.task}</td>
+                      <td>{assigneeText}</td>
+                      <td>{(item.dueDate && item.dueDate !== 'No Deadline' && item.dueDate !== 'null' && item.dueDate !== '-') ? item.dueDate : (item.due_date && item.due_date !== 'No Deadline' && item.due_date !== 'null' && item.due_date !== '-') ? item.due_date : 'No Deadline'}</td>
+                      <td style={{ textAlign: 'right' }}>
+                        {!isAssigned && (
+                          <button
+                            className="btn btn-primary btn-sm"
+                            style={{ fontSize: '0.75rem' }}
+                            onClick={() => handleApproveTask({ ...item, meeting_title: meeting.title })}
+                          >
+                            <Send className="w-3 h-3" /> Approve & Delegate
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

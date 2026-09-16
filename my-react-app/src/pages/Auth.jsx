@@ -72,7 +72,9 @@ export default function Auth() {
 
       // Store logged-in user in localStorage
       localStorage.setItem('user', JSON.stringify(data.user));
-      navigate('/analyze');
+      const redirectTo = localStorage.getItem('redirectAfterLogin') || '/dashboard';
+      localStorage.removeItem('redirectAfterLogin');
+      navigate(redirectTo);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -106,7 +108,9 @@ export default function Auth() {
 
       localStorage.setItem('user', JSON.stringify(data.user));
       setSocialModal(null);
-      navigate('/analyze');
+      const redirectTo = localStorage.getItem('redirectAfterLogin') || '/dashboard';
+      localStorage.removeItem('redirectAfterLogin');
+      navigate(redirectTo);
     } catch (err) {
       setError(err.message);
     } finally {
