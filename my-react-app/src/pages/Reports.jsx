@@ -777,95 +777,7 @@ export default function Reports() {
           </div>
 
           {/* =========================================================================
-              SECTION A: PRODUCTIVITY TREND OVER TIME
-             ========================================================================= */}
-          <div style={{
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            padding: '1.5rem',
-            marginBottom: '1.75rem',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.875rem' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-                    Productivity Trend Over Time
-                  </h2>
-                </div>
-                <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                  {report.is_lead ? 'Team-wide task completion rate across the last 5–6 periods' : 'Personal task completion rate across the last 5–6 periods'}
-                </div>
-              </div>
-
-              {/* Trajectory Badge */}
-              {report.trend && report.trend.length >= 2 && (() => {
-                const latest = report.trend[report.trend.length - 1]?.completion_rate ?? 0;
-                const prev = report.trend[report.trend.length - 2]?.completion_rate ?? 0;
-                const diff = latest - prev;
-                const isPositive = diff > 0;
-                const isZero = diff === 0;
-                return (
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    padding: '0.3rem 0.65rem',
-                    borderRadius: '6px',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    background: isZero ? '#f1f5f9' : isPositive ? '#dcfce7' : '#fee2e2',
-                    color: isZero ? '#475569' : isPositive ? '#166534' : '#991b1b',
-                    border: `1px solid ${isZero ? '#e2e8f0' : isPositive ? '#bbf7d0' : '#fecaca'}`
-                  }}>
-                    {isZero ? <Minus className="w-3.5 h-3.5" /> : isPositive ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
-                    <span>
-                      {isZero ? 'Stable velocity vs previous period' : `${isPositive ? '+' : ''}${diff}% velocity vs previous period`}
-                    </span>
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* SVG Trend Line / Area Chart */}
-            {renderProductivityTrendChart(report.trend)}
-
-            {/* Micro-metrics summary strip under chart */}
-            {report.trend && report.trend.length > 0 && (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: `repeat(${Math.min(report.trend.length, 6)}, 1fr)`,
-                gap: '0.75rem',
-                marginTop: '1.25rem',
-                paddingTop: '1rem',
-                borderTop: '1px solid #f1f5f9'
-              }}>
-                {report.trend.map((pt, idx) => (
-                  <div key={idx} style={{ textAlign: 'center', padding: '0.5rem', background: '#f8fafc', borderRadius: '6px' }}>
-                    <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-                      {pt.period}
-                    </div>
-                    <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', margin: '0.2rem 0' }}>
-                      {pt.completion_rate}%
-                    </div>
-                    <div style={{ fontSize: '0.6875rem', color: '#64748b' }}>
-                      {pt.completed_tasks}/{pt.total_tasks} done
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* =========================================================================
-              SECTION B: MEETING-TO-TASK CONVERSION
-             ========================================================================= */}
-
-
-          {/* =========================================================================
-              SECTION C: TASKS DUE TOMORROW
+              SECTION A: TASKS DUE TOMORROW
              ========================================================================= */}
           <div style={{
             background: '#ffffff',
@@ -974,6 +886,89 @@ export default function Reports() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+
+          {/* =========================================================================
+              SECTION B: PRODUCTIVITY TREND OVER TIME
+             ========================================================================= */}
+          <div style={{
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            marginBottom: '1.75rem',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.875rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                    Productivity Trend Over Time
+                  </h2>
+                </div>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                  {report.is_lead ? 'Team-wide task completion rate across the last 5–6 periods' : 'Personal task completion rate across the last 5–6 periods'}
+                </div>
+              </div>
+
+              {/* Trajectory Badge */}
+              {report.trend && report.trend.length >= 2 && (() => {
+                const latest = report.trend[report.trend.length - 1]?.completion_rate ?? 0;
+                const prev = report.trend[report.trend.length - 2]?.completion_rate ?? 0;
+                const diff = latest - prev;
+                const isPositive = diff > 0;
+                const isZero = diff === 0;
+                return (
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.3rem 0.65rem',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    background: isZero ? '#f1f5f9' : isPositive ? '#dcfce7' : '#fee2e2',
+                    color: isZero ? '#475569' : isPositive ? '#166534' : '#991b1b',
+                    border: `1px solid ${isZero ? '#e2e8f0' : isPositive ? '#bbf7d0' : '#fecaca'}`
+                  }}>
+                    {isZero ? <Minus className="w-3.5 h-3.5" /> : isPositive ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                    <span>
+                      {isZero ? 'Stable velocity vs previous period' : `${isPositive ? '+' : ''}${diff}% velocity vs previous period`}
+                    </span>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* SVG Trend Line / Area Chart */}
+            {renderProductivityTrendChart(report.trend)}
+
+            {/* Micro-metrics summary strip under chart */}
+            {report.trend && report.trend.length > 0 && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${Math.min(report.trend.length, 6)}, 1fr)`,
+                gap: '0.75rem',
+                marginTop: '1.25rem',
+                paddingTop: '1rem',
+                borderTop: '1px solid #f1f5f9'
+              }}>
+                {report.trend.map((pt, idx) => (
+                  <div key={idx} style={{ textAlign: 'center', padding: '0.5rem', background: '#f8fafc', borderRadius: '6px' }}>
+                    <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                      {pt.period}
+                    </div>
+                    <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', margin: '0.2rem 0' }}>
+                      {pt.completion_rate}%
+                    </div>
+                    <div style={{ fontSize: '0.6875rem', color: '#64748b' }}>
+                      {pt.completed_tasks}/{pt.total_tasks} done
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

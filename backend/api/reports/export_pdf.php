@@ -491,43 +491,10 @@ try {
 
     $pdf->SetY($startY + $cardH + 7);
 
-    // ================= SECTION 1: PRODUCTIVITY TREND OVER TIME =================
+    // ================= SECTION 1: TASKS DUE TOMORROW =================
     $pdf->SetFont('Arial', 'B', 11);
     $pdf->SetTextColor(30, 41, 59);
-    $pdf->Cell(190, 6, '1. Productivity Trend Over Time (Historical Periods)', 0, 1, 'L');
-    $pdf->Ln(1);
-
-    $pdf->SetFillColor(37, 99, 235);
-    $pdf->SetTextColor(255, 255, 255);
-    $pdf->SetFont('Arial', 'B', 8.5);
-    $pdf->SetDrawColor(37, 99, 235);
-
-    $pdf->Cell(60, 7, '  Period', 1, 0, 'L', true);
-    $pdf->Cell(40, 7, 'Tasks Created', 1, 0, 'C', true);
-    $pdf->Cell(45, 7, 'Tasks Completed', 1, 0, 'C', true);
-    $pdf->Cell(45, 7, 'Completion Rate', 1, 1, 'C', true);
-
-    $pdf->SetFont('Arial', '', 8);
-    $pdf->SetDrawColor(226, 232, 240);
-    $fillT = false;
-    foreach ($trend as $t) {
-        $pdf->SetFillColor($fillT ? 248 : 255, $fillT ? 250 : 255, $fillT ? 252 : 255);
-        $pdf->SetTextColor(30, 41, 59);
-        $pdf->Cell(60, 6.5, '  ' . $t['period'], 1, 0, 'L', true);
-        $pdf->SetTextColor(71, 85, 105);
-        $pdf->Cell(40, 6.5, (string)$t['total_tasks'], 1, 0, 'C', true);
-        $pdf->SetTextColor(22, 163, 74);
-        $pdf->Cell(45, 6.5, (string)$t['completed_tasks'], 1, 0, 'C', true);
-        $pdf->SetTextColor(37, 99, 235);
-        $pdf->Cell(45, 6.5, "{$t['completion_rate']}%", 1, 1, 'C', true);
-        $fillT = !$fillT;
-    }
-    $pdf->Ln(5);
-
-    // ================= SECTION 2: TASKS DUE TOMORROW =================
-    $pdf->SetFont('Arial', 'B', 11);
-    $pdf->SetTextColor(30, 41, 59);
-    $pdf->Cell(190, 6, '2. Tasks Due Tomorrow', 0, 1, 'L');
+    $pdf->Cell(190, 6, '1. Tasks Due Tomorrow', 0, 1, 'L');
     $pdf->Ln(1);
 
     $pdf->SetFillColor(37, 99, 235);
@@ -582,6 +549,39 @@ try {
             $pdf->Cell(25, 6.5, $t['due_date'], 1, 1, 'C', true);
             $fillTmrw = !$fillTmrw;
         }
+    }
+    $pdf->Ln(5);
+
+    // ================= SECTION 2: PRODUCTIVITY TREND OVER TIME =================
+    $pdf->SetFont('Arial', 'B', 11);
+    $pdf->SetTextColor(30, 41, 59);
+    $pdf->Cell(190, 6, '2. Productivity Trend Over Time (Historical Periods)', 0, 1, 'L');
+    $pdf->Ln(1);
+
+    $pdf->SetFillColor(37, 99, 235);
+    $pdf->SetTextColor(255, 255, 255);
+    $pdf->SetFont('Arial', 'B', 8.5);
+    $pdf->SetDrawColor(37, 99, 235);
+
+    $pdf->Cell(60, 7, '  Period', 1, 0, 'L', true);
+    $pdf->Cell(40, 7, 'Tasks Created', 1, 0, 'C', true);
+    $pdf->Cell(45, 7, 'Tasks Completed', 1, 0, 'C', true);
+    $pdf->Cell(45, 7, 'Completion Rate', 1, 1, 'C', true);
+
+    $pdf->SetFont('Arial', '', 8);
+    $pdf->SetDrawColor(226, 232, 240);
+    $fillT = false;
+    foreach ($trend as $t) {
+        $pdf->SetFillColor($fillT ? 248 : 255, $fillT ? 250 : 255, $fillT ? 252 : 255);
+        $pdf->SetTextColor(30, 41, 59);
+        $pdf->Cell(60, 6.5, '  ' . $t['period'], 1, 0, 'L', true);
+        $pdf->SetTextColor(71, 85, 105);
+        $pdf->Cell(40, 6.5, (string)$t['total_tasks'], 1, 0, 'C', true);
+        $pdf->SetTextColor(22, 163, 74);
+        $pdf->Cell(45, 6.5, (string)$t['completed_tasks'], 1, 0, 'C', true);
+        $pdf->SetTextColor(37, 99, 235);
+        $pdf->Cell(45, 6.5, "{$t['completion_rate']}%", 1, 1, 'C', true);
+        $fillT = !$fillT;
     }
     $pdf->Ln(5);
 
