@@ -84,12 +84,16 @@ export default function Settings() {
     setProfileSuccess('');
     setProfileError('');
 
-    if (!name.trim()) {
-      setProfileError('Name cannot be blank.');
+    const cleanName = name.trim();
+    const cleanEmail = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!cleanName || cleanName.length < 2) {
+      setProfileError('Name must be at least 2 characters.');
       return;
     }
-    if (!email.trim() || !email.includes('@')) {
-      setProfileError('Please enter a valid email address.');
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      setProfileError('Please enter a valid email address (e.g. name@company.com).');
       return;
     }
 
@@ -97,8 +101,8 @@ export default function Settings() {
     try {
       const res = await updateUserProfile({
         user_id: savedUser.id || 1,
-        name: name.trim(),
-        email: email.trim()
+        name: cleanName,
+        email: cleanEmail
       });
 
       if (res.success && res.user) {
@@ -130,6 +134,10 @@ export default function Settings() {
     }
     if (newPassword.length < 6) {
       setPasswordError('New password must be at least 6 characters long.');
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setPasswordError('New password must be different from current password.');
       return;
     }
     if (newPassword !== confirmPassword) {

@@ -18,11 +18,33 @@ if (
     !empty($data->email) &&
     !empty($data->password)
 ) {
+    $trimmedName = trim($data->name);
+    $trimmedEmail = trim($data->email);
+    $trimmedPassword = trim($data->password);
+
+    if (strlen($trimmedName) < 2) {
+        http_response_code(400);
+        echo json_encode(array("message" => "Name must be at least 2 characters long."));
+        exit();
+    }
+
+    if (!filter_var($trimmedEmail, FILTER_VALIDATE_EMAIL)) {
+        http_response_code(400);
+        echo json_encode(array("message" => "Please enter a valid email address."));
+        exit();
+    }
+
+    if (strlen($trimmedPassword) < 6) {
+        http_response_code(400);
+        echo json_encode(array("message" => "Password must be at least 6 characters long."));
+        exit();
+    }
+
     try {
         // Check if email already exists
         $check_query = "SELECT id FROM users WHERE email = :email LIMIT 1";
         $check_stmt = $conn->prepare($check_query);
-        $check_stmt->bindParam(":email", $data->email);
+        $check_stmt->bindParam(":email", $trimmedEmail);
         $check_stmt->execute();
 
         if ($check_stmt->rowCount() > 0) {

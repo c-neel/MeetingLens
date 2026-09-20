@@ -38,22 +38,48 @@ if ($method === 'GET') {
     $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
     $data = json_decode(file_get_contents("php://input"));
     
-    if ($id > 0 && !empty($data->status)) {
+    if ($id > 0) {
         try {
-            $updateFields = ["status = :status"];
-            $params = [":status" => $data->status, ":id" => $id];
+            $updateFields = [];
+            $params = [":id" => $id];
+
+            $allowedStatuses = ['Pending', 'In Progress', 'Completed'];
+            $allowedPriorities = ['High', 'Medium', 'Low'];
+
+            if (!empty($data->status) && in_array($data->status, $allowedStatuses)) {
+                $updateFields[] = "status = :status";
+                $params[":status"] = $data->status;
+            }
             
             if (isset($data->assignee)) {
+                $rawAssignee = trim((string)$data->assignee);
+                $cleanAssignee = ($rawAssignee === '' || in_array(strtolower($rawAssignee), ['unassigned', 'none', 'not specified', '-'])) ? '-' : $rawAssignee;
                 $updateFields[] = "assignee = :assignee";
-                $params[":assignee"] = $data->assignee;
+                $params[":assignee"] = $cleanAssignee;
             }
+
             if (isset($data->due_date)) {
+                $rawDue = trim((string)$data->due_date);
+                $cleanDue = null;
+                if (!empty($rawDue) && !in_array(strtolower($rawDue), ['no deadline', 'null', '-', 'none'])) {
+                    $parsed = strtotime($rawDue);
+                    if ($parsed !== false) {
+                        $cleanDue = date('Y-m-d', $parsed);
+                    }
+                }
                 $updateFields[] = "due_date = :due_date";
-                $params[":due_date"] = $data->due_date;
+                $params[":due_date"] = $cleanDue;
             }
-            if (isset($data->priority)) {
+
+            if (!empty($data->priority) && in_array($data->priority, $allowedPriorities)) {
                 $updateFields[] = "priority = :priority";
                 $params[":priority"] = $data->priority;
+            }
+
+            if (empty($updateFields)) {
+                http_response_code(400);
+                echo json_encode(["success" => false, "message" => "No valid fields provided for update."]);
+                exit;
             }
             
             $query = "UPDATE action_items SET " . implode(", ", $updateFields) . " WHERE id = :id";

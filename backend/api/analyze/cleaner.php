@@ -44,11 +44,11 @@ STRICT CONSTRAINTS:
    - Relevant meeting context
 2. Make MINIMUM NECESSARY changes. If a sentence contains both important and unwanted content, remove ONLY the unwanted portion while keeping the important information intact.
 3. Clean the summary — do NOT shorten or summarize it unnecessarily.
-4. PARAGRAPH-ONLY FORMAT: Return executive_summary and detailed_summary ONLY as clear, well-structured paragraphs separated by double line breaks (\n\n). Do NOT merge multiple paragraphs into a single wall of text, and do NOT use or keep any bullet points, numbered lists, headings, bold section titles (e.g., **Topic:**), tables, or separate sections.
+4. STRUCTURED FORMAT PRESERVATION: Keep the existing structured format with **bold section headers** and • bullet points. Preserve double line breaks (\\n\\n) between sections. Do NOT merge sections into a single wall of text. Do NOT remove section headers or convert bullet points to paragraphs.
 5. Return ONLY valid JSON with structure:
 {
-  "executive_summary": "First cleaned paragraph...\\n\\nSecond cleaned paragraph...",
-  "detailed_summary": "First cleaned paragraph...\\n\\nSecond cleaned paragraph..."
+  "executive_summary": "**Section Header**\\n• Cleaned bullet 1...\\n• Cleaned bullet 2...\\n\\n**Section Header**\\n• Cleaned bullet...",
+  "detailed_summary": "**Section Header**\\n• Cleaned bullet 1...\\n\\n**Section Header**\\n• Cleaned bullet..."
 }
 
 TEXT TO REVIEW:

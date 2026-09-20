@@ -185,10 +185,27 @@ export default function Reports() {
       setError('Please select both a start date and an end date.');
       return;
     }
-    if (new Date(startDate) > new Date(endDate)) {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    const sDate = new Date(startDate);
+    const eDate = new Date(endDate);
+
+    if (isNaN(sDate.getTime()) || isNaN(eDate.getTime())) {
+      setError('Invalid date format selected.');
+      return;
+    }
+
+    if (sDate > eDate) {
       setError('Start date cannot be after end date.');
       return;
     }
+
+    if (sDate > today) {
+      setError('Start date cannot be in the future.');
+      return;
+    }
+
     fetchReport(startDate, endDate, activePreset, false);
   };
 
@@ -199,6 +216,10 @@ export default function Reports() {
   };
 
   const handleExportPDF = () => {
+    if (!startDate || !endDate || new Date(startDate) > new Date(endDate)) {
+      alert('Please select a valid date range before exporting.');
+      return;
+    }
     handleInteractionStart();
     const url = getReportPdfUrl(startDate, endDate, activePreset);
     const link = document.createElement('a');
@@ -211,6 +232,10 @@ export default function Reports() {
   };
 
   const handleExportCSV = () => {
+    if (!startDate || !endDate || new Date(startDate) > new Date(endDate)) {
+      alert('Please select a valid date range before exporting.');
+      return;
+    }
     handleInteractionStart();
     const url = getReportCsvUrl(startDate, endDate, activePreset);
     const link = document.createElement('a');
@@ -456,6 +481,7 @@ export default function Reports() {
             <input 
               type="date"
               value={startDate}
+              max={endDate || new Date().toISOString().split('T')[0]}
               onFocus={handleInteractionStart}
               onBlur={handleInteractionEnd}
               onChange={(e) => {
@@ -477,6 +503,8 @@ export default function Reports() {
             <input 
               type="date"
               value={endDate}
+              min={startDate || undefined}
+              max={new Date().toISOString().split('T')[0]}
               onFocus={handleInteractionStart}
               onBlur={handleInteractionEnd}
               onChange={(e) => {

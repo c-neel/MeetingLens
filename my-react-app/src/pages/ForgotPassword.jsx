@@ -25,8 +25,11 @@ export default function ForgotPassword() {
     setError('');
     setSuccessMsg('');
 
-    if (!email) {
-      setError('Please enter your registered email address.');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      setError('Please enter a valid email address.');
       return;
     }
 
@@ -36,7 +39,7 @@ export default function ForgotPassword() {
       const response = await fetch('http://localhost:8000/api/users/forgot_password.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ email: cleanEmail }),
       });
 
       const data = await response.json();
@@ -60,8 +63,9 @@ export default function ForgotPassword() {
     setError('');
     setSuccessMsg('');
 
-    if (!otp || otp.trim().length !== 6) {
-      setError('Please enter the 6-digit OTP code sent to your email.');
+    const cleanOtp = otp.trim();
+    if (!cleanOtp || !/^\d{6}$/.test(cleanOtp)) {
+      setError('Please enter a valid 6-digit numeric OTP code.');
       return;
     }
 

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
+import StructuredSummary from '../components/StructuredSummary';
 import { getMeetingById, getDocuments, uploadDocument, deleteDocument } from '../services/api';
 import { ArrowLeft, Save, FileDown, Mail, Edit2, ShieldAlert, Zap, CheckCircle2, Clock, Calendar, FileText, AlertTriangle, ChevronDown, Paperclip, Plus, Download, Trash2, Upload, X, AlertCircle, CheckCircle, Send } from 'lucide-react';
 import { exportAsPDF, exportAsWord, downloadDocumentFile } from '../utils/exporter';
@@ -376,7 +377,7 @@ export default function MeetingDetails() {
 
           <div style={{ marginBottom: '1.5rem' }}>
             <h4 style={{ fontWeight: 700, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--primary)', marginBottom: '0.5rem' }}>1. Executive Summary</h4>
-            <p style={{ fontSize: '0.875rem', lineHeight: 1.6, whiteSpace: 'pre-line' }}>{meeting.executive_summary || meeting.summary}</p>
+            <StructuredSummary text={meeting.executive_summary || meeting.summary} />
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>

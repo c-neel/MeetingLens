@@ -120,18 +120,28 @@ CRITICAL RULES:
 4. If information is not present, use null or "Not specified".
 5. Never invent names, dates, decisions, tasks, or priorities.
 6. CONTENT CLEANING & SANITIZATION: After generating the meeting summary, review the summary for explicit, inappropriate, irrelevant, or unwanted content. Remove only content that is clearly unnecessary, explicit, inappropriate, or unrelated to the meeting. Do NOT remove, alter, or oversimplify important information, including key decisions, tasks, deadlines, responsibilities, names, requirements, conclusions, or important discussion points. Preserve the original meaning and context of the summary. If a sentence contains both important and unwanted information, remove only the unwanted portion while keeping the important information intact.
-7. PARAGRAPH-ONLY SUMMARY FORMAT: Return the transcript summary ONLY in clear, well-structured paragraphs. Do NOT use bullet points, numbered lists, headings, bold section titles, tables, or separate sections in the summary text. Combine related information naturally into flowing paragraphs while preserving all important details, decisions, tasks, deadlines, responsibilities, and relevant context. Keep the summary concise, readable, and logically organized.
+7. STRUCTURED SUMMARY FORMAT: Return summaries in a clean structured format using section headers and bullet points for readability. Use the format: **Section Title** followed by bullet points starting with • on new lines. Separate sections with double line breaks (\n\n).
 
 INSTRUCTIONS:
 
-1. EXECUTIVE SUMMARY: Write at least 2 to 3 distinct, well-structured paragraphs (separated by double line breaks \n\n). NEVER return the executive summary as a single giant wall of text.
-   - Paragraph 1: The purpose of the meeting, who participated, and the core discussion focus.
-   - Paragraph 2: Key progress reports, technical status, and project updates mentioned.
-   - Paragraph 3: Specific outcomes, decisions made, target deadlines, testing timelines, and next steps.
-   Every statement MUST come from the transcript.
+1. EXECUTIVE SUMMARY: Write a well-structured summary divided into clearly labeled sections. Use the following format with **bold section headers** and • bullet points:
+
+   **Meeting Overview**
+   • Purpose of the meeting and participants
+   • Core discussion focus
+
+   **Key Discussions & Updates**
+   • Key progress reports and status updates (each as a separate bullet)
+   • Technical decisions or project updates
+
+   **Outcomes & Next Steps**
+   • Decisions made and deadlines set (each as a separate bullet)
+   • Immediate action items and responsibilities
+
+   Keep each bullet concise (1-2 sentences max). Every statement MUST come from the transcript.
    Review and clean the summary to filter out any explicit, inappropriate, or irrelevant content while preserving all critical context, decisions, tasks, deadlines, and responsibilities.
 
-2. DETAILED SUMMARY: Write a comprehensive, well-structured multi-paragraph narrative combining all key discussion points, context, decisions, and action items naturally into cohesive paragraphs separated by double line breaks (\n\n). Do NOT use bullet points, numbered lists, markdown headings (like # or **Topic:**), tables, or separate labeled sections.
+2. DETAILED SUMMARY: Write a comprehensive, well-structured summary using **bold section headers** and • bullet points. Group related discussion points under logical section headers. Each bullet should cover one distinct point. Separate sections with double line breaks (\n\n).
 
 3. DECISIONS: Extract ONLY decisions that were explicitly agreed upon or clearly finalized during the meeting.
    A decision means "What did the team agree/finalize?" — NOT an action item.
@@ -151,8 +161,8 @@ INSTRUCTIONS:
 
 Return ONLY valid JSON with exactly this structure:
 {
-  "executive_summary": "First paragraph...\\n\\nSecond paragraph...\\n\\nThird paragraph...",
-  "detailed_summary": "First paragraph...\\n\\nSecond paragraph...\\n\\nThird paragraph...",
+  "executive_summary": "**Meeting Overview**\\n• Purpose and participants...\\n• Core focus...\\n\\n**Key Discussions & Updates**\\n• Update 1...\\n• Update 2...\\n\\n**Outcomes & Next Steps**\\n• Decision 1...\\n• Next step 1...",
+  "detailed_summary": "**Topic 1**\\n• Detail point 1...\\n• Detail point 2...\\n\\n**Topic 2**\\n• Detail point 1...",
   "decisions": ["Decision 1 from transcript", "Decision 2 from transcript"],
   "action_items": [
     {

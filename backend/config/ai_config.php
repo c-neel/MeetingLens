@@ -6,8 +6,7 @@
 // PASTE YOUR REAL GEMINI API KEY BELOW
 // Get one free at: https://aistudio.google.com/apikey
 // Valid keys start with "AIzaSy"
-// =====================================================
-define('GEMINI_API_KEY', 'YOUR_API_KEY_HERE');
+define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: 'YOUR_GEMINI_API_KEY_HERE');
 
 // Gemini model — gemini-3.6-flash endpoint
 define('GEMINI_MODEL', 'gemini-3.6-flash');

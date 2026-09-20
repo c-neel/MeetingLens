@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import StructuredSummary from '../components/StructuredSummary';
 import { Video, Mic, MicOff, VideoOff, Monitor, MessageSquare, Users, PhoneOff, Copy, Check, Zap, AlertCircle, Loader2, Play, Square } from 'lucide-react';
 import { processTranscript, saveMeeting } from '../services/api';
 
@@ -56,11 +57,13 @@ export default function OnlineMeeting() {
   // Start Meeting Call
   const handleStartCall = (e) => {
     if (e) e.preventDefault();
-    if (!roomName.trim()) {
-      alert('Please enter or generate a meeting room name.');
+    const cleanRoom = roomName.trim().replace(/[^a-zA-Z0-9-_]/g, '');
+    if (!cleanRoom || cleanRoom.length < 3) {
+      alert('Please enter a valid room name with at least 3 alphanumeric characters (letters, numbers, hyphens).');
       return;
     }
-    const title = meetingTitle.trim() || roomName.trim();
+    setRoomName(cleanRoom);
+    const title = meetingTitle.trim() || cleanRoom;
     setMeetingTitle(title);
     setInCall(true);
 
@@ -367,15 +370,13 @@ export default function OnlineMeeting() {
 
           <div style={{ marginBottom: '1.5rem' }}>
             <h4 style={{ color: 'var(--primary)', fontWeight: 600, marginBottom: '0.5rem' }}>Executive Summary</h4>
-            <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.875rem', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
-              {aiResult.executive_summary}
-            </div>
+            <StructuredSummary text={aiResult.executive_summary || aiResult.summary || ''} />
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
             <h4 style={{ color: 'var(--primary)', fontWeight: 600, marginBottom: '0.5rem' }}>Key Decisions</h4>
             <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.875rem' }}>
-              {aiResult.decisions.map((d, i) => (
+              {(aiResult.decisions || []).map((d, i) => (
                 <li key={i} style={{ marginBottom: '0.25rem' }}>{d}</li>
               ))}
             </ul>

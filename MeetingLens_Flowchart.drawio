@@ -1,0 +1,208 @@
+<mxfile host="app.diagrams.net" modified="2026-09-18T08:30:00.000Z" agent="MeetingLens" version="21.0.0" type="device">
+  <diagram id="meetinglens-complete-flow" name="MeetingLens End-to-End Flowchart">
+    <mxGraphModel dx="1600" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1400" background="#0B0F19" math="0" shadow="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title Banner -->
+        <mxCell id="title_box" value="&lt;b&gt;&lt;font style=&quot;font-size: 24px; color: #38BDF8;&quot;&gt;MeetingLens • Complete End-to-End System Flowchart&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 13px; color: #94A3B8;&quot;&gt;From Multi-Modal Ingestion &amp; Speech Recognition to AI Analysis, Task Approval &amp; Database Sync&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#334155;strokeWidth=2;align=center;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="250" y="40" width="900" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- 1. START NODE -->
+        <mxCell id="start_node" value="&lt;b&gt;START SESSION&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;User Authenticates &amp;amp; Enters Dashboard&lt;/font&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#0284C7;strokeColor=#38BDF8;strokeWidth=2;fontColor=#FFFFFF;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="600" y="150" width="200" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- 2. INPUT SELECTION (DECISION) -->
+        <mxCell id="dec_input" value="&lt;b&gt;Select Input Mode&lt;/b&gt;" style="rhombus;whiteSpace=wrap;html=1;fillColor=#6366F1;strokeColor=#818CF8;strokeWidth=2;fontColor=#FFFFFF;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="610" y="250" width="180" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- INPUT BRANCH 1: LIVE VOICE -->
+        <mxCell id="inp_voice" value="&lt;b&gt;Live Voice Meeting&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #CBD5E1;&quot;&gt;Microphone Stream via Web Speech &amp;amp; MediaRecorder API&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#38BDF8;strokeWidth=2;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="260" y="380" width="220" height="65" as="geometry"/>
+        </mxCell>
+
+        <!-- INPUT BRANCH 2: FILE UPLOAD -->
+        <mxCell id="inp_upload" value="&lt;b&gt;Audio / Video / Text Upload&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #CBD5E1;&quot;&gt;Parse MP3, MP4, WAV, TXT or PDF documents&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#A855F7;strokeWidth=2;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="590" y="380" width="220" height="65" as="geometry"/>
+        </mxCell>
+
+        <!-- INPUT BRANCH 3: EXTERNAL LINK -->
+        <mxCell id="inp_link" value="&lt;b&gt;Meeting Link Ingestion&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #CBD5E1;&quot;&gt;Import Google Meet / Zoom Webhook recording&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#F59E0B;strokeWidth=2;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="920" y="380" width="220" height="65" as="geometry"/>
+        </mxCell>
+
+        <!-- TRANSCRIPTION / STREAMING BUFFER -->
+        <mxCell id="proc_transcribe" value="&lt;b&gt;Speech-to-Text &amp;amp; Ingestion Pipeline&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #CBD5E1;&quot;&gt;Client-side stream transcription with live rolling preview buffer&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#06B6D4;strokeWidth=2;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="560" y="490" width="280" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- STOP & PREPROCESS -->
+        <mxCell id="proc_clean" value="&lt;b&gt;Transcript Preprocessing &amp;amp; Noise Cleaner&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #CBD5E1;&quot;&gt;Remove filler words, deduplicate stutters &amp;amp; format timestamps&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#10B981;strokeWidth=2;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="560" y="590" width="280" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- AI ENGINE (LLM PROMPT) -->
+        <mxCell id="proc_ai" value="&lt;b&gt;AI Analysis Engine (Google Gemini / LLM)&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #CBD5E1;&quot;&gt;Orchestrate prompt with Strict JSON Schema (Summaries, Tasks, Quality Score)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#312E81;strokeColor=#818CF8;strokeWidth=2;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="540" y="690" width="320" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- VALIDATION DECISION -->
+        <mxCell id="dec_valid" value="&lt;b&gt;Valid JSON Schema?&lt;/b&gt;" style="rhombus;whiteSpace=wrap;html=1;fillColor=#D97706;strokeColor=#FBBF24;strokeWidth=2;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="610" y="800" width="180" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- REGEX REPAIR -->
+        <mxCell id="proc_repair" value="&lt;b&gt;Regex Sanitizer &amp;amp; Repair&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #CBD5E1;&quot;&gt;Extract raw JSON blocks and repair corrupted markdown tokens&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7F1D1D;strokeColor=#F87171;strokeWidth=2;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="870" y="810" width="230" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- EXTRACTED OUTPUTS (PARALLEL CONTAINER) -->
+        <mxCell id="box_extracted" value="&lt;b&gt;&lt;font style=&quot;font-size: 14px; color: #38BDF8;&quot;&gt;Extracted Intelligence Outputs&lt;/font&gt;&lt;/b&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#0F172A;strokeColor=#334155;strokeWidth=2;fontColor=#FFFFFF;fontSize=12;startSize=30;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="380" y="920" width="640" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="out_summary" value="&lt;b&gt;Executive Summary&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px; color: #94A3B8;&quot;&gt;Topic Breakdown &amp;amp; Decisions&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#38BDF8;fontColor=#FFFFFF;fontSize=11;" vertex="1" parent="box_extracted">
+          <mxGeometry x="20" y="40" width="180" height="45" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="out_tasks" value="&lt;b&gt;Structured Action Items&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px; color: #94A3B8;&quot;&gt;Assignees, Deadlines &amp;amp; Priority&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#A855F7;fontColor=#FFFFFF;fontSize=11;" vertex="1" parent="box_extracted">
+          <mxGeometry x="230" y="40" width="180" height="45" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="out_quality" value="&lt;b&gt;Quality &amp;amp; Sentiment Score&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px; color: #94A3B8;&quot;&gt;Meeting Efficiency Metrics (0-100)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#10B981;fontColor=#FFFFFF;fontSize=11;" vertex="1" parent="box_extracted">
+          <mxGeometry x="440" y="40" width="180" height="45" as="geometry"/>
+        </mxCell>
+
+        <!-- HUMAN-IN-THE-LOOP TASK APPROVAL -->
+        <mxCell id="proc_modal" value="&lt;b&gt;&lt;font style=&quot;font-size: 14px; color: #F59E0B;&quot;&gt;Human-in-the-Loop Task Approval Dashboard&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #CBD5E1;&quot;&gt;Host reviews, reassigns owners, updates deadlines, adds or removes tasks&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#F59E0B;strokeWidth=2;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="500" y="1060" width="400" height="65" as="geometry"/>
+        </mxCell>
+
+        <!-- APPROVAL DECISION -->
+        <mxCell id="dec_approve" value="&lt;b&gt;Approve &amp;amp; Save?&lt;/b&gt;" style="rhombus;whiteSpace=wrap;html=1;fillColor=#059669;strokeColor=#34D399;strokeWidth=2;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="615" y="1160" width="170" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- EDIT LOOP -->
+        <mxCell id="proc_edit" value="&lt;b&gt;Edit Action Item&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px; color: #CBD5E1;&quot;&gt;Modify assignee, due date, description&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#FBBF24;fontColor=#FFFFFF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="940" y="1175" width="200" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- DATABASE PERSISTENCE -->
+        <mxCell id="db_mysql" value="&lt;b&gt;MySQL Relational Persistence&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #CBD5E1;&quot;&gt;Atomic Transaction: INSERT into meetings &amp;amp; action_items&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#1E293B;strokeColor=#38BDF8;strokeWidth=2;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="580" y="1280" width="240" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- END NODE -->
+        <mxCell id="end_node" value="&lt;b&gt;COMPLETED MEETING&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;Details View, Team Alerts &amp;amp; PDF Export Ready&lt;/font&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#059669;strokeColor=#34D399;strokeWidth=2;fontColor=#FFFFFF;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="580" y="1400" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ==================== CONNECTORS ==================== -->
+        <!-- Start -> Input Decision -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#38BDF8;strokeWidth=2;" edge="1" source="start_node" target="dec_input" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Input Decision -> Branches -->
+        <mxCell id="e2" value="Live Mic" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#38BDF8;strokeWidth=2;fontColor=#38BDF8;" edge="1" source="dec_input" target="inp_voice" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e3" value="Upload File" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#A855F7;strokeWidth=2;fontColor=#A855F7;" edge="1" source="dec_input" target="inp_upload" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e4" value="Meeting Link" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F59E0B;strokeWidth=2;fontColor=#F59E0B;" edge="1" source="dec_input" target="inp_link" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Branches -> Transcribe Pipeline -->
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#06B6D4;strokeWidth=2;" edge="1" source="inp_voice" target="proc_transcribe" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#06B6D4;strokeWidth=2;" edge="1" source="inp_upload" target="proc_transcribe" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#06B6D4;strokeWidth=2;" edge="1" source="inp_link" target="proc_transcribe" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Transcribe -> Clean -->
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;" edge="1" source="proc_transcribe" target="proc_clean" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Clean -> AI Engine -->
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#818CF8;strokeWidth=2;" edge="1" source="proc_clean" target="proc_ai" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- AI Engine -> Valid Decision -->
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FBBF24;strokeWidth=2;" edge="1" source="proc_ai" target="dec_valid" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Valid Decision -> Regex Repair (No) -->
+        <mxCell id="e11" value="Malformed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F87171;strokeWidth=2;fontColor=#F87171;" edge="1" source="dec_valid" target="proc_repair" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Regex Repair -> Extracted Box -->
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#38BDF8;strokeWidth=2;" edge="1" source="proc_repair" target="box_extracted" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="985" y="900"/>
+              <mxPoint x="700" y="900"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Valid Decision -> Extracted Box (Yes) -->
+        <mxCell id="e13" value="Valid JSON" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#34D399;strokeWidth=2;fontColor=#34D399;" edge="1" source="dec_valid" target="box_extracted" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Extracted Box -> Task Approval Modal -->
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F59E0B;strokeWidth=2;" edge="1" source="box_extracted" target="proc_modal" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Task Approval Modal -> Approval Decision -->
+        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F59E0B;strokeWidth=2;" edge="1" source="proc_modal" target="dec_approve" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Approval Decision -> Edit Loop (Modify) -->
+        <mxCell id="e16" value="Modify" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FBBF24;strokeWidth=2;fontColor=#FBBF24;" edge="1" source="dec_approve" target="proc_edit" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FBBF24;strokeWidth=2;" edge="1" source="proc_edit" target="proc_modal" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1040" y="1090"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Approval Decision -> MySQL (Approve) -->
+        <mxCell id="e18" value="Confirmed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#34D399;strokeWidth=2;fontColor=#34D399;" edge="1" source="dec_approve" target="db_mysql" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- MySQL -> End Node -->
+        <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#34D399;strokeWidth=2;" edge="1" source="db_mysql" target="end_node" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

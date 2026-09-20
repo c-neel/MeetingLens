@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MeetingLens - Project Presentation</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;600&display=swap');
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b0f19;
+      color: #f8fafc;
+      padding: 20px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+    }
+    .slide {
+      width: 1100px;
+      min-height: 620px;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      page-break-after: always;
+    }
+    .header-tag {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #38bdf8;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .slide-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 24px;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 12px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      flex: 1;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 18px;
+      flex: 1;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 16px;
+      flex: 1;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .text-sky { color: #38bdf8; }
+    .text-purple { color: #c084fc; }
+    .text-amber { color: #fbbf24; }
+    .text-emerald { color: #34d399; }
+    
+    .card-content {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+    .card-content ul {
+      padding-left: 18px;
+    }
+    .card-content li {
+      margin-bottom: 10px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #334155;
+    }
+    th {
+      background: #1e293b;
+      color: #38bdf8;
+      font-weight: 700;
+    }
+    td {
+      background: rgba(30, 41, 59, 0.5);
+      color: #e2e8f0;
+    }
+    
+    pre code {
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      color: #34d399;
+      line-height: 1.5;
+      display: block;
+      background: #020617;
+      padding: 18px;
+      border-radius: 8px;
+      border: 1px solid #1e293b;
+      overflow-x: auto;
+    }
+    
+    .slide-footer {
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #64748b;
+      padding-top: 16px;
+    }
+    
+    .btn-print {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+      z-index: 9999;
+    }
+    
+    @media print {
+      body {
+        background: none;
+        padding: 0;
+      }
+      .btn-print { display: none; }
+      .slide {
+        box-shadow: none;
+        border: none;
+        margin: 0;
+        min-height: 100vh;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <button class="btn-print" onclick="window.print()">🖨️ Save as PDF / Print Presentation</button>
+
+  <!-- Slide 1 -->
+  <div class="slide">
+    <div class="header-tag">MEETINGLENS • PROJECT PRESENTATION</div>
+    <div style="margin: auto 0; padding: 40px; background: #1e293b; border-radius: 16px; border: 1px solid #334155;">
+      <div style="color: #38bdf8; font-weight: 700; font-size: 14px; margin-bottom: 8px;">AI-POWERED MEETING INTELLIGENCE</div>
+      <h1 style="font-size: 48px; font-weight: 800; color: #ffffff; margin-bottom: 12px;">MeetingLens</h1>
+      <h2 style="font-size: 22px; color: #c084fc; font-weight: 600; margin-bottom: 20px;">Automated Summarization, Action Item Extraction & Task Delegation Platform</h2>
+      <p style="font-size: 15px; color: #94a3b8; max-width: 800px; line-height: 1.6; margin-bottom: 24px;">Transforming spoken conversations into structured knowledge, verified action items, and measurable execution with human-in-the-loop governance.</p>
+      <div style="font-size: 13px; font-weight: 600; color: #34d399;">Domain: Artificial Intelligence • Natural Language Processing • Full-Stack Web App</div>
+    </div>
+    <div class="slide-footer">
+      <span>MeetingLens Presentation</span>
+      <span>Slide 1 of 10</span>
+    </div>
+  </div>
+
+  <!-- Slide 2 -->
+  <div class="slide">
+    <div class="header-tag">BACKGROUND & CONTEXT</div>
+    <div class="slide-title">Problem Statement: The Meeting Productivity Crisis</div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title text-amber">1. Information Loss & Fatigue</div>
+        <div class="card-content">
+          <ul>
+            <li>Lengthy 30–60+ minute meetings overwhelm human working memory.</li>
+            <li>Critical context, decisions, and technical reasoning are lost after calls end.</li>
+            <li>Recordings are rarely rewatched due to lack of time and indexing.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title text-amber">2. Manual Note-Taking Flaws</div>
+        <div class="card-content">
+          <ul>
+            <li>Designated note-takers cannot actively participate in brainstorming.</li>
+            <li>Human notes are subjective, prone to personal bias, and incomplete.</li>
+            <li>Inconsistent note formats prevent team-wide searchability.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title text-amber">3. Task Accountability Void</div>
+        <div class="card-content">
+          <ul>
+            <li>Over 40% of assigned tasks fall through the cracks post-meeting.</li>
+            <li>Verbal task assignments lack clear deadlines and ownership tags.</li>
+            <li>No built-in verification mechanism to review and confirm tasks.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>MeetingLens Presentation</span>
+      <span>Slide 2 of 10</span>
+    </div>
+  </div>
+
+  <!-- Slide 3 -->
+  <div class="slide">
+    <div class="header-tag">SOLUTION OVERVIEW</div>
+    <div class="slide-title">Expected Outcome & Proposed Solution: MeetingLens</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title text-sky">Core Proposed Solution</div>
+        <div class="card-content">
+          <ul>
+            <li><strong class="text-sky">Multi-Modal Capture:</strong> Record live audio with real-time Speech-to-Text or upload audio, video, and text logs.</li>
+            <li><strong class="text-sky">Multi-Tier AI Summaries:</strong> Executive high-level takeaways, chronological topic breakdowns, and decision registries.</li>
+            <li><strong class="text-sky">Automated Task Extraction:</strong> LLM detects actionable tasks, assignees, deadlines, and urgency tags.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title text-emerald">Key Deliverables & Governance</div>
+        <div class="card-content">
+          <ul>
+            <li><strong class="text-emerald">Human-in-the-Loop Task Approval:</strong> Interactive verification modal to review, edit, or reassign AI tasks before saving.</li>
+            <li><strong class="text-emerald">Meeting Quality Scoring:</strong> Objective metric evaluating meeting clarity, efficiency, and actionable outcomes (0–100%).</li>
+            <li><strong class="text-emerald">Searchable Archive & Reports:</strong> Instant historical query engine with downloadable PDF/Markdown reports.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>MeetingLens Presentation</span>
+      <span>Slide 3 of 10</span>
+    </div>
+  </div>
+
+  <!-- Slide 4 -->
+  <div class="slide">
+    <div class="header-tag">SYSTEM WORKFLOW</div>
+    <div class="slide-title">End-to-End Workflow Diagram</div>
+    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px;">
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 11px; font-weight: 700; color: #38bdf8;">STEP 1</div>
+        <div style="font-size: 14px; font-weight: 700; color: white; margin: 6px 0;">Audio Ingestion</div>
+        <div style="font-size: 12px; color: #94a3b8;">Live Voice Capture or File Upload</div>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 11px; font-weight: 700; color: #c084fc;">STEP 2</div>
+        <div style="font-size: 14px; font-weight: 700; color: white; margin: 6px 0;">Speech-to-Text</div>
+        <div style="font-size: 12px; color: #94a3b8;">Real-time transcription & text cleaning</div>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 11px; font-weight: 700; color: #fbbf24;">STEP 3</div>
+        <div style="font-size: 14px; font-weight: 700; color: white; margin: 6px 0;">AI Analysis Core</div>
+        <div style="font-size: 12px; color: #94a3b8;">LLM extracts summary & action items</div>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 11px; font-weight: 700; color: #34d399;">STEP 4</div>
+        <div style="font-size: 14px; font-weight: 700; color: white; margin: 6px 0;">Task Approval</div>
+        <div style="font-size: 12px; color: #94a3b8;">Human review, edit & verification</div>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 11px; font-weight: 700; color: #38bdf8;">STEP 5</div>
+        <div style="font-size: 14px; font-weight: 700; color: white; margin: 6px 0;">Sync & Export</div>
+        <div style="font-size: 12px; color: #94a3b8;">Save to MySQL, notify team & export</div>
+      </div>
+    </div>
+    <div class="card" style="flex: 1;">
+      <div class="card-title text-emerald">Workflow Summary Pipeline</div>
+      <div class="card-content" style="font-family: monospace; font-size: 13px; color: #38bdf8;">
+        [Audio Stream / Upload] ➔ [Speech Engine] ➔ [Clean Transcript] ➔ [Gemini / LLM Prompt] ➔ [Structured JSON] ➔ [Task Approval Modal] ➔ [MySQL Storage] ➔ [Reports & Action Dashboard]
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>MeetingLens Presentation</span>
+      <span>Slide 4 of 10</span>
+    </div>
+  </div>
+
+  <!-- Slide 5 -->
+  <div class="slide">
+    <div class="header-tag">TECHNICAL ARCHITECTURE</div>
+    <div class="slide-title">System Architecture Diagram</div>
+    <div class="grid-4">
+      <div class="card">
+        <div class="card-title text-sky">1. Client Layer (React SPA)</div>
+        <div class="card-content">
+          <ul>
+            <li>Live Voice Meeting (Web Speech API)</li>
+            <li>Meeting Details & Dynamic Transcripts</li>
+            <li>Task Approval & Delegation Portal</li>
+            <li>Analytics & Report Hub</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title text-purple">2. API Gateway (PHP REST)</div>
+        <div class="card-content">
+          <ul>
+            <li>JWT Authentication & Session Guards</li>
+            <li>/api/meetings - CRUD & History Engine</li>
+            <li>/api/analyze - AI Prompt Orchestrator</li>
+            <li>/api/action-items - Task State Manager</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title text-amber">3. Intelligence Layer (AI / LLM)</div>
+        <div class="card-content">
+          <ul>
+            <li>Google Gemini / Multi-Model LLMs</li>
+            <li>Strict JSON Schema Extraction</li>
+            <li>Noise Repair & Context Cleaning</li>
+            <li>Quality & Sentiment Scoring Engine</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title text-emerald">4. Persistence Layer (MySQL)</div>
+        <div class="card-content">
+          <ul>
+            <li>users (Accounts, Credentials, Roles)</li>
+            <li>meetings (Transcripts, Summaries, Scores)</li>
+            <li>action_items (Tasks, Owners, Deadlines)</li>
+            <li>InnoDB ACID Relational Constraints</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>MeetingLens Presentation</span>
+      <span>Slide 5 of 10</span>
+    </div>
+  </div>
+
+  <!-- Slide 6 -->
+  <div class="slide">
+    <div class="header-tag">IMPLEMENTATION STACK</div>
+    <div class="slide-title">Technologies & Tools Used</div>
+    <table style="flex: 1;">
+      <thead>
+        <tr>
+          <th style="width: 20%;">Layer</th>
+          <th style="width: 35%;">Technology / Tool</th>
+          <th style="width: 45%;">Role / Justification</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong class="text-sky">Frontend UI</strong></td>
+          <td>React.js (Vite), Tailwind / Custom CSS, Lucide Icons</td>
+          <td>High-speed SPA rendering, reactive state management, and modern responsive UI.</td>
+        </tr>
+        <tr>
+          <td><strong class="text-sky">Audio / STT</strong></td>
+          <td>Web Speech API, MediaRecorder API</td>
+          <td>In-browser real-time speech capture and audio streaming without client latency.</td>
+        </tr>
+        <tr>
+          <td><strong class="text-sky">Backend API</strong></td>
+          <td>PHP 8.x (RESTful API), Apache / XAMPP</td>
+          <td>Lightweight, robust endpoint routing, JWT session verification, and payload sanitization.</td>
+        </tr>
+        <tr>
+          <td><strong class="text-sky">Database</strong></td>
+          <td>MySQL (InnoDB Relational Schema)</td>
+          <td>ACID-compliant storage for users, meetings, full transcripts, and linked action items.</td>
+        </tr>
+        <tr>
+          <td><strong class="text-sky">AI / NLP Core</strong></td>
+          <td>Google Gemini API / OpenAI LLMs</td>
+          <td>Zero-shot JSON extraction, executive summarization, and meeting quality scoring.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="slide-footer">
+      <span>MeetingLens Presentation</span>
+      <span>Slide 6 of 10</span>
+    </div>
+  </div>
+
+  <!-- Slide 7 -->
+  <div class="slide">
+    <div class="header-tag">ALGORITHM & LOGIC</div>
+    <div class="slide-title">Algorithm: Meeting Intelligence Pipeline (MIP)</div>
+    <div class="card" style="flex: 1;">
+      <pre><code>Algorithm: MeetingIntelligencePipeline(InputSource, CurrentUser)
+---------------------------------------------------------------------------------------------
+1. IF InputSource is LiveAudio THEN Transcript = WebSpeechTranscribe(InputSource)
+   ELSE Transcript = SanitizeAndExtractText(InputSource)
+2. CleanText = RemoveNoiseAndFillerWords(Transcript)
+3. PromptPayload = BuildStructuredPrompt(Role="Executive PM", Transcript=CleanText, Schema="JSON")
+4. AI_Response = InvokeLLM_API(PromptPayload)
+5. ParsedData = ValidateAndParseJSON(AI_Response)
+6. DB_Transaction_Begin():
+     MeetingID = InsertMeeting(user_id=CurrentUser.id, title=ParsedData.title, summary=ParsedData.summary,
+                               executive_summary=ParsedData.executive_summary, quality_score=ParsedData.quality_score)
+     FOR EACH task IN ParsedData.action_items:
+         InsertActionItem(meeting_id=MeetingID, description=task.desc, assignee=task.owner, deadline=task.due)
+   DB_Transaction_Commit()
+7. Trigger TaskApprovalModal(MeetingID, ActionItems) for Human Verification & Editing
+8. Return Structured Meeting Dashboard View</code></pre>
+    </div>
+    <div class="slide-footer">
+      <span>MeetingLens Presentation</span>
+      <span>Slide 7 of 10</span>
+    </div>
+  </div>
+
+  <!-- Slide 8 -->
+  <div class="slide">
+    <div class="header-tag">RISK MANAGEMENT</div>
+    <div class="slide-title">Assumptions, Challenges & Mitigation Strategies</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title text-sky">Assumptions</div>
+        <div class="card-content">
+          <ul>
+            <li><strong>Audio Hardware & Network:</strong> Stable microphone input and active network connection for LLM processing.</li>
+            <li><strong>Speaker Attribution:</strong> Participants state names during speech or contextual cues allow owner extraction.</li>
+            <li><strong>Language Baseline:</strong> Primary spoken language is English with support for technical jargon.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title text-amber">Challenges & Mitigations</div>
+        <div class="card-content">
+          <ul>
+            <li><strong>LLM Hallucinations:</strong> Enforce strict JSON schemas and multi-pattern regex sanitization fallbacks.</li>
+            <li><strong>Broken / Noisy Transcripts:</strong> Dual-tier cleaning (client preprocessing + LLM context repair).</li>
+            <li><strong>Ambiguous Deadlines & Tasks:</strong> Human-in-the-loop Task Approval screen prevents false assignments.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>MeetingLens Presentation</span>
+      <span>Slide 8 of 10</span>
+    </div>
+  </div>
+
+  <!-- Slide 9 -->
+  <div class="slide">
+    <div class="header-tag">ROADMAP</div>
+    <div class="slide-title">Future Advancements & Extensions</div>
+    <div class="grid-4">
+      <div class="card">
+        <div class="card-title text-sky">1. Speaker Diarization</div>
+        <div class="card-content">
+          Integrate PyAnnote / WhisperX to isolate individual speakers with exact audio timestamps and voiceprints.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title text-purple">2. PM Tool Integrations</div>
+        <div class="card-content">
+          Direct sync of approved action items to Jira, Asana, Trello, Notion, and Google Calendar.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title text-emerald">3. Meeting Bot Joiners</div>
+        <div class="card-content">
+          Autonomous bot integrations for Zoom, Google Meet, and Microsoft Teams to record and analyze automatically.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title text-amber">4. Conversational RAG Archive</div>
+        <div class="card-content">
+          Vector search engine allowing users to ask natural language questions across all past meeting transcripts.
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>MeetingLens Presentation</span>
+      <span>Slide 9 of 10</span>
+    </div>
+  </div>
+
+  <!-- Slide 10 -->
+  <div class="slide">
+    <div class="header-tag">CONCLUSION</div>
+    <div style="margin: auto 0; padding: 40px; background: #1e293b; border-radius: 16px; border: 1px solid #334155; text-align: center;">
+      <div style="color: #34d399; font-weight: 700; font-size: 14px; margin-bottom: 8px;">SUMMARY & CONCLUSION</div>
+      <h1 style="font-size: 40px; font-weight: 800; color: #ffffff; margin-bottom: 16px;">MeetingLens: Execution Without Friction</h1>
+      <p style="font-size: 16px; color: #cbd5e1; max-width: 800px; margin: 0 auto 24px auto; line-height: 1.6;">
+        Eliminating post-meeting documentation fatigue, enforcing task accountability, and creating a unified knowledge archive for modern productive teams.
+      </p>
+      <h2 style="font-size: 24px; color: #38bdf8; font-weight: 700;">Thank You! Questions & Discussion Welcome.</h2>
+    </div>
+    <div class="slide-footer">
+      <span>MeetingLens Presentation</span>
+      <span>Slide 10 of 10</span>
+    </div>
+  </div>
+
+</body>
+</html>

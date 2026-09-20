@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import StructuredSummary from '../components/StructuredSummary';
 import { UploadCloud, FileText, Loader2, Save, Check, X, Edit2, ShieldAlert, Zap, CheckCircle2, AlertTriangle, XCircle, User, UserCheck, ArrowLeft, RefreshCw, Calendar, Clock } from 'lucide-react';
 import { processTranscript, saveMeeting, getMeetingById } from '../services/api';
 
@@ -141,7 +142,17 @@ export default function NewMeeting() {
   };
 
   const handleUpload = async () => {
-    if (!title || !file) return alert('Title and transcript file are required.');
+    if (!title.trim()) return alert('Please enter a meeting title.');
+    if (!file) return alert('Please upload a transcript file.');
+    
+    // File size guard (15MB maximum)
+    if (file.size > 15 * 1024 * 1024) {
+      return alert('The selected file exceeds the 15MB limit. Please upload a smaller transcript file.');
+    }
+
+    if (date && isNaN(new Date(date).getTime())) {
+      return alert('Please enter a valid meeting date.');
+    }
     
     setProcessing(true);
     setAnalysisError(null);
@@ -258,6 +269,24 @@ export default function NewMeeting() {
     const idx = assignModalTaskIdx;
     const updated = [...editedTasks];
     const item = updated[idx];
+
+    const cleanAssignee = assignModalName.trim();
+    if (!cleanAssignee) {
+      alert('Please enter a valid assignee name.');
+      return;
+    }
+
+    if (assignModalDueDate.trim()) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const chosenDate = new Date(assignModalDueDate);
+      chosenDate.setHours(0, 0, 0, 0);
+      if (chosenDate < today) {
+        alert('Deadline date cannot be in the past. Please select today or a future date.');
+        return;
+      }
+    }
+
     const finalDueDate = assignModalDueDate.trim() ? assignModalDueDate.trim() : 'No Deadline';
 
     updated[idx] = {
@@ -411,6 +440,8 @@ export default function NewMeeting() {
               value={title} 
               onChange={(e) => setTitle(e.target.value)} 
               placeholder="e.g. Q3 Sprint Planning Review" 
+              maxLength={150}
+              required
             />
           </div>
           <div className="form-group">
@@ -419,6 +450,7 @@ export default function NewMeeting() {
               type="date" 
               className="form-input" 
               value={date} 
+              max={new Date(Date.now() + 365*24*60*60*1000).toISOString().split('T')[0]}
               onChange={(e) => setDate(e.target.value)} 
             />
           </div>
@@ -566,9 +598,7 @@ export default function NewMeeting() {
             {/* Executive Summary */}
             <div id="summary-section" style={{ marginBottom: '2rem', scrollMarginTop: '2rem' }}>
               <h3 style={{ fontSize: '1.125rem', marginBottom: '0.5rem', color: 'var(--primary)', fontWeight: 600 }}>Executive Summary</h3>
-              <div style={{ backgroundColor: '#f8fafc', padding: '1.25rem', borderRadius: '0.5rem', border: '1px solid var(--border)', fontSize: '0.9375rem', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
-                {results.executive_summary || results.summary}
-              </div>
+              <StructuredSummary text={results.executive_summary || results.summary} />
             </div>
 
             {/* Key Decisions */}
@@ -865,6 +895,7 @@ export default function NewMeeting() {
                     type="date"
                     className="form-input"
                     value={assignModalDueDate}
+                    min={new Date().toISOString().split('T')[0]}
                     onChange={(e) => setAssignModalDueDate(e.target.value)}
                     style={{ width: '100%', paddingLeft: '2.25rem' }}
                   />

@@ -90,62 +90,93 @@ switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents("php://input"));
         
-        if (!empty($data->title)) {
-            try {
-                $conn->beginTransaction();
-                
-                $title = $data->title;
-                $date = !empty($data->date) ? $data->date : date('Y-m-d');
-                $summary = !empty($data->summary) ? $data->summary : (!empty($data->executive_summary) ? $data->executive_summary : '');
-                $transcript = !empty($data->transcript) ? $data->transcript : '';
-                $user_id = !empty($data->user_id) ? intval($data->user_id) : 1;
+        $title = !empty($data->title) ? trim($data->title) : '';
+        if (empty($title)) {
+            http_response_code(400);
+            echo json_encode(["message" => "Meeting title is required and cannot be blank."]);
+            break;
+        }
 
-                $stmt = $conn->prepare("INSERT INTO meetings (user_id, title, meeting_date, summary, transcript) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$user_id, $title, $date, $summary, $transcript]);
-                $meeting_id = $conn->lastInsertId();
+        try {
+            $conn->beginTransaction();
+            
+            // Validate meeting date
+            $date = date('Y-m-d');
+            if (!empty($data->date)) {
+                $parsedTime = strtotime($data->date);
+                if ($parsedTime !== false) {
+                    $date = date('Y-m-d', $parsedTime);
+                }
+            }
 
-                if (!empty($data->decisions)) {
-                    $stmt = $conn->prepare("INSERT INTO decisions (meeting_id, decision_text) VALUES (?, ?)");
-                    foreach ($data->decisions as $decision) {
-                        $text = is_string($decision) ? $decision : (isset($decision->decision_text) ? $decision->decision_text : (isset($decision->text) ? $decision->text : json_encode($decision)));
+            $summary = !empty($data->summary) ? $data->summary : (!empty($data->executive_summary) ? $data->executive_summary : '');
+            $executive_summary = !empty($data->executive_summary) ? $data->executive_summary : $summary;
+            $detailed_summary = !empty($data->detailed_summary) ? $data->detailed_summary : '';
+            $transcript = !empty($data->transcript) ? $data->transcript : '';
+            $user_id = !empty($data->user_id) ? intval($data->user_id) : 1;
+            $source = !empty($data->source) ? $data->source : 'file';
+            $duration = !empty($data->duration) ? $data->duration : null;
+            $quality_score = isset($data->quality_score) ? intval($data->quality_score) : null;
+            $participants = !empty($data->participants) ? (is_array($data->participants) ? implode(', ', $data->participants) : $data->participants) : null;
+
+            $stmt = $conn->prepare("INSERT INTO meetings (user_id, title, meeting_date, summary, executive_summary, detailed_summary, transcript, source, duration, quality_score, participants) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$user_id, $title, $date, $summary, $executive_summary, $detailed_summary, $transcript, $source, $duration, $quality_score, $participants]);
+            $meeting_id = $conn->lastInsertId();
+
+            if (!empty($data->decisions)) {
+                $stmt = $conn->prepare("INSERT INTO decisions (meeting_id, decision_text) VALUES (?, ?)");
+                foreach ($data->decisions as $decision) {
+                    $text = is_string($decision) ? trim($decision) : (isset($decision->decision_text) ? trim($decision->decision_text) : (isset($decision->text) ? trim($decision->text) : json_encode($decision)));
+                    if (!empty($text)) {
                         $stmt->execute([$meeting_id, $text]);
                     }
                 }
-
-                if (!empty($data->actionItems)) {
-                    $stmt = $conn->prepare("INSERT INTO action_items (meeting_id, task, assignee, due_date, priority, status) VALUES (?, ?, ?, ?, ?, ?)");
-                    foreach ($data->actionItems as $item) {
-                        $dueDate = !empty($item->dueDate) ? $item->dueDate : (!empty($item->due_date) ? $item->due_date : null);
-                        $priority = !empty($item->priority) ? $item->priority : 'Medium';
-                        $status = !empty($item->status) ? $item->status : 'Pending';
-                        $rawAssignee = !empty($item->assignee) ? trim((string)$item->assignee) : '';
-                        $assignee = ($rawAssignee === '' || in_array(strtolower($rawAssignee), ['unassigned', 'none', 'not specified', '-'])) ? '-' : $rawAssignee;
-                        $stmt->execute([$meeting_id, $item->task, $assignee, $dueDate, $priority, $status]);
-                    }
-                }
-
-                // Automatically generate Document entries for this meeting
-                $cleanTitle = preg_replace('/[^A-Za-z0-9_]/', '_', $title);
-                $docStmt = $conn->prepare("INSERT INTO documents (meeting_id, file_name, document_type) VALUES (?, ?, ?)");
-                $docStmt->execute([$meeting_id, $cleanTitle . "_Summary.pdf", 'PDF']);
-                $docStmt->execute([$meeting_id, $cleanTitle . "_MOM.docx", 'DOCX']);
-
-                // Fetch the newly inserted action items to return their IDs
-                $itemsStmt = $conn->prepare("SELECT id, task FROM action_items WHERE meeting_id = ?");
-                $itemsStmt->execute([$meeting_id]);
-                $insertedItems = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
-
-                $conn->commit();
-                http_response_code(201);
-                echo json_encode(["message" => "Meeting created successfully.", "id" => $meeting_id, "actionItems" => $insertedItems]);
-            } catch (Exception $e) {
-                $conn->rollBack();
-                http_response_code(503);
-                echo json_encode(["message" => "Unable to create meeting.", "error" => $e->getMessage()]);
             }
-        } else {
-            http_response_code(400);
-            echo json_encode(["message" => "Incomplete data."]);
+
+            if (!empty($data->actionItems)) {
+                $allowedPriorities = ['High', 'Medium', 'Low'];
+                $allowedStatuses = ['Pending', 'In Progress', 'Completed'];
+
+                $stmt = $conn->prepare("INSERT INTO action_items (meeting_id, task, assignee, due_date, priority, status) VALUES (?, ?, ?, ?, ?, ?)");
+                foreach ($data->actionItems as $item) {
+                    $taskText = !empty($item->task) ? trim($item->task) : '';
+                    if (empty($taskText)) continue;
+
+                    $rawDueDate = !empty($item->dueDate) ? trim((string)$item->dueDate) : (!empty($item->due_date) ? trim((string)$item->due_date) : null);
+                    $dueDate = null;
+                    if (!empty($rawDueDate) && !in_array(strtolower($rawDueDate), ['no deadline', 'null', '-', 'none'])) {
+                        $parsedDue = strtotime($rawDueDate);
+                        if ($parsedDue !== false) {
+                            $dueDate = date('Y-m-d', $parsedDue);
+                        }
+                    }
+
+                    $priority = (!empty($item->priority) && in_array($item->priority, $allowedPriorities)) ? $item->priority : 'Medium';
+                    $status = (!empty($item->status) && in_array($item->status, $allowedStatuses)) ? $item->status : 'Pending';
+                    $rawAssignee = !empty($item->assignee) ? trim((string)$item->assignee) : '';
+                    $assignee = ($rawAssignee === '' || in_array(strtolower($rawAssignee), ['unassigned', 'none', 'not specified', '-'])) ? '-' : $rawAssignee;
+                    $stmt->execute([$meeting_id, $taskText, $assignee, $dueDate, $priority, $status]);
+                }
+            }
+
+            // Automatically generate Document entries for this meeting
+            $cleanTitle = preg_replace('/[^A-Za-z0-9_]/', '_', $title);
+            $docStmt = $conn->prepare("INSERT INTO documents (meeting_id, file_name, document_type) VALUES (?, ?, ?)");
+            $docStmt->execute([$meeting_id, $cleanTitle . "_Summary.pdf", 'PDF']);
+            $docStmt->execute([$meeting_id, $cleanTitle . "_MOM.docx", 'DOCX']);
+
+            // Fetch the newly inserted action items to return their IDs
+            $itemsStmt = $conn->prepare("SELECT id, task FROM action_items WHERE meeting_id = ?");
+            $itemsStmt->execute([$meeting_id]);
+            $insertedItems = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $conn->commit();
+            http_response_code(201);
+            echo json_encode(["message" => "Meeting created successfully.", "id" => $meeting_id, "actionItems" => $insertedItems]);
+        } catch (Exception $e) {
+            $conn->rollBack();
+            http_response_code(503);
+            echo json_encode(["message" => "Unable to create meeting.", "error" => $e->getMessage()]);
         }
         break;
 

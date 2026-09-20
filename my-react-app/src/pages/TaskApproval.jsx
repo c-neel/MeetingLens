@@ -120,9 +120,29 @@ export default function TaskApproval() {
 
   const handleApproveAndSendEmail = async (e) => {
     if (e) e.preventDefault();
-    if (!assigneeName.trim() || !assigneeEmail.trim()) {
-      alert('Please specify the assignee name and valid email ID.');
+    const cleanName = assigneeName.trim();
+    const cleanEmail = assigneeEmail.trim();
+
+    if (!cleanName || cleanName.length < 2) {
+      alert('Please enter a valid assignee name (at least 2 characters).');
       return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      alert('Please enter a valid email address (e.g. name@company.com).');
+      return;
+    }
+
+    if (dueDate && dueDate.trim()) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const chosen = new Date(dueDate);
+      chosen.setHours(0, 0, 0, 0);
+      if (chosen < today) {
+        alert('Deadline date cannot be in the past. Please select today or a future date.');
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -371,6 +391,7 @@ export default function TaskApproval() {
                 type="date"
                 className="form-input"
                 value={dueDate}
+                min={new Date().toISOString().split('T')[0]}
                 onChange={e => setDueDate(e.target.value)}
               />
             </div>

@@ -1,0 +1,117 @@
+<mxfile host="app.diagrams.net" modified="2026-09-18T08:30:00.000Z" agent="MeetingLens" version="21.0.0" type="device">
+  <diagram id="meetinglens-architecture" name="MeetingLens System Architecture">
+    <mxGraphModel dx="1600" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" background="#0B0F19" math="0" shadow="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title Banner -->
+        <mxCell id="arch_title" value="&lt;b&gt;&lt;font style=&quot;font-size: 24px; color: #38BDF8;&quot;&gt;MeetingLens • 4-Tier System Architecture Diagram&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 13px; color: #94A3B8;&quot;&gt;Modular Layered Architecture: Frontend Client, API Gateway, Intelligence Layer &amp;amp; Persistence Layer&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#334155;strokeWidth=2;align=center;arcSize=12;" vertex="1" parent="1">
+          <mxGeometry x="250" y="40" width="900" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- LAYER 1: CLIENT PRESENTATION LAYER -->
+        <mxCell id="layer_client" value="&lt;b&gt;&lt;font style=&quot;font-size: 15px; color: #38BDF8;&quot;&gt;1. CLIENT PRESENTATION LAYER (React 18 SPA + Vite)&lt;/font&gt;&lt;/b&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#0F172A;strokeColor=#38BDF8;strokeWidth=2;fontColor=#FFFFFF;fontSize=13;startSize=36;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="80" y="150" width="1240" height="150" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c_voice" value="&lt;b&gt;Voice Meeting Room&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #94A3B8;&quot;&gt;Live Web Speech STT &amp;amp; Audio Capture&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#334155;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="layer_client">
+          <mxGeometry x="30" y="55" width="210" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c_details" value="&lt;b&gt;Meeting Details Hub&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #94A3B8;&quot;&gt;Smart Transcripts &amp;amp; Summaries&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#334155;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="layer_client">
+          <mxGeometry x="280" y="55" width="210" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c_modal" value="&lt;b&gt;Task Approval Modal&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #94A3B8;&quot;&gt;Human-in-the-Loop Verification&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#334155;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="layer_client">
+          <mxGeometry x="530" y="55" width="210" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c_reports" value="&lt;b&gt;Analytics &amp;amp; Reports&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #94A3B8;&quot;&gt;Quality Score &amp;amp; PDF Export&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#334155;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="layer_client">
+          <mxGeometry x="780" y="55" width="210" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c_auth" value="&lt;b&gt;Authentication Portal&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #94A3B8;&quot;&gt;JWT Login &amp;amp; Role Guards&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#334155;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="layer_client">
+          <mxGeometry x="1030" y="55" width="180" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- LAYER 2: API GATEWAY LAYER -->
+        <mxCell id="layer_api" value="&lt;b&gt;&lt;font style=&quot;font-size: 15px; color: #A855F7;&quot;&gt;2. API GATEWAY &amp;amp; CONTROLLER LAYER (PHP 8.x REST API)&lt;/font&gt;&lt;/b&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#0F172A;strokeColor=#A855F7;strokeWidth=2;fontColor=#FFFFFF;fontSize=13;startSize=36;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="80" y="360" width="1240" height="150" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a_jwt" value="&lt;b&gt;JWT Auth Middleware&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #94A3B8;&quot;&gt;Token Verification &amp;amp; CORS Guard&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#A855F7;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="layer_api">
+          <mxGeometry x="40" y="55" width="220" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a_meetings" value="&lt;b&gt;/api/meetings&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #94A3B8;&quot;&gt;CRUD, Filtering &amp;amp; Transcripts&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#334155;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="layer_api">
+          <mxGeometry x="340" y="55" width="220" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a_analyze" value="&lt;b&gt;/api/analyze&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #94A3B8;&quot;&gt;NLP Orchestrator &amp;amp; Sanitizer&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#334155;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="layer_api">
+          <mxGeometry x="640" y="55" width="220" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a_actions" value="&lt;b&gt;/api/action-items&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #94A3B8;&quot;&gt;Task Assignment &amp;amp; Approval State&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#334155;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="layer_api">
+          <mxGeometry x="940" y="55" width="260" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- LAYER 3: INTELLIGENCE LAYER -->
+        <mxCell id="layer_ai" value="&lt;b&gt;&lt;font style=&quot;font-size: 15px; color: #F59E0B;&quot;&gt;3. INTELLIGENCE &amp;amp; EXTERNAL SERVICES LAYER&lt;/font&gt;&lt;/b&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#0F172A;strokeColor=#F59E0B;strokeWidth=2;fontColor=#FFFFFF;fontSize=13;startSize=36;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="80" y="570" width="1240" height="150" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ai_gemini" value="&lt;b&gt;Google Gemini AI / Multi-LLM&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #94A3B8;&quot;&gt;Zero-shot Summary &amp;amp; Task Extraction&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#F59E0B;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="layer_ai">
+          <mxGeometry x="100" y="55" width="280" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ai_cleaner" value="&lt;b&gt;Regex JSON Cleaner Engine&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #94A3B8;&quot;&gt;Schema Verification &amp;amp; Token Fixer&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#334155;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="layer_ai">
+          <mxGeometry x="480" y="55" width="280" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ai_smtp" value="&lt;b&gt;SMTP / Notification Engine&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px; color: #94A3B8;&quot;&gt;Task Assignment Email Dispatches&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#334155;fontColor=#FFFFFF;fontSize=12;" vertex="1" parent="layer_ai">
+          <mxGeometry x="860" y="55" width="280" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- LAYER 4: DATABASE PERSISTENCE LAYER -->
+        <mxCell id="layer_db" value="&lt;b&gt;&lt;font style=&quot;font-size: 15px; color: #10B981;&quot;&gt;4. PERSISTENCE &amp;amp; STORAGE LAYER (MySQL Relational DB)&lt;/font&gt;&lt;/b&gt;" style="swimlane;whiteSpace=wrap;html=1;fillColor=#0F172A;strokeColor=#10B981;strokeWidth=2;fontColor=#FFFFFF;fontSize=13;startSize=36;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="80" y="780" width="1240" height="160" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="db_users" value="&lt;b&gt;users Table&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px; color: #94A3B8;&quot;&gt;id, name, email, password_hash, created_at&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#1E293B;strokeColor=#10B981;fontColor=#FFFFFF;fontSize=11;" vertex="1" parent="layer_db">
+          <mxGeometry x="100" y="50" width="280" height="85" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="db_meetings" value="&lt;b&gt;meetings Table&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px; color: #94A3B8;&quot;&gt;id, user_id, title, date, duration, transcript, summary, executive_summary, quality_score&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#1E293B;strokeColor=#10B981;fontColor=#FFFFFF;fontSize=11;" vertex="1" parent="layer_db">
+          <mxGeometry x="450" y="50" width="340" height="85" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="db_actions" value="&lt;b&gt;action_items Table&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px; color: #94A3B8;&quot;&gt;id, meeting_id, task_description, assigned_to, deadline, priority, status&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#1E293B;strokeColor=#10B981;fontColor=#FFFFFF;fontSize=11;" vertex="1" parent="layer_db">
+          <mxGeometry x="860" y="50" width="310" height="85" as="geometry"/>
+        </mxCell>
+
+        <!-- ==================== CROSS-LAYER CONNECTORS ==================== -->
+        <!-- Client -> API Gateway -->
+        <mxCell id="c_edge_1" value="REST / JSON over HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#38BDF8;strokeWidth=2;fontColor=#38BDF8;fontSize=11;" edge="1" source="layer_client" target="layer_api" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- API -> AI Layer -->
+        <mxCell id="c_edge_2" value="NLP Prompts &amp;amp; Payloads" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F59E0B;strokeWidth=2;fontColor=#F59E0B;fontSize=11;" edge="1" source="a_analyze" target="ai_gemini" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- API -> MySQL Layer -->
+        <mxCell id="c_edge_3" value="PDO Prepared SQL Transactions" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;fontColor=#10B981;fontSize=11;" edge="1" source="layer_api" target="layer_db" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1270" y="540"/>
+              <mxPoint x="1270" y="750"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

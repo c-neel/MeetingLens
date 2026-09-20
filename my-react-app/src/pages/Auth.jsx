@@ -25,14 +25,32 @@ export default function Auth() {
     e.preventDefault();
     setError('');
     
-    if (!email || !password) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail || !password) {
       setError('Please fill in all required fields.');
+      return;
+    }
+
+    if (!emailRegex.test(cleanEmail)) {
+      setError('Please enter a valid email address (e.g. name@company.com).');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
       return;
     }
     
     if (isRegister) {
-      if (!name || !confirmPassword) {
+      const cleanName = name.trim();
+      if (!cleanName || !confirmPassword) {
         setError('Please fill in all required fields.');
+        return;
+      }
+      if (cleanName.length < 2) {
+        setError('Full name must be at least 2 characters long.');
         return;
       }
       if (password !== confirmPassword) {

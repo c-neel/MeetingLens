@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, Square, Pause, Play, Download, ArrowRight, Loader2, CheckCircle2, Check, X, User, UserCheck, Calendar } from 'lucide-react';
+import StructuredSummary from '../components/StructuredSummary';
+import { Mic, Square, Pause, Play, Download, ArrowRight, Loader2, CheckCircle2, Check, X, User, UserCheck, Calendar, Save } from 'lucide-react';
 import { processTranscript, saveMeeting } from '../services/api';
 
 export default function VoiceMeeting() {
@@ -108,7 +109,7 @@ export default function VoiceMeeting() {
   };
 
   const startRecording = () => {
-    if (!title) return alert('Please enter a meeting title.');
+    if (!title.trim()) return alert('Please enter a meeting title.');
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -194,23 +195,29 @@ export default function VoiceMeeting() {
       await new Promise(r => setTimeout(r, 400));
     }
 
-    const aiResults = await processTranscript(transcript, title);
-    setResults(aiResults);
+    try {
+      const aiResults = await processTranscript(transcript, title);
+      setResults(aiResults);
 
-    const initialMap = {};
-    const tasks = (aiResults.actionItems || []).map((t, idx) => {
-      initialMap[idx] = 'approved';
-      return {
-        ...t,
-        assignee: t.assignee || '-',
-        dueDate: t.dueDate || t.due_date || null,
-        due_date: t.dueDate || t.due_date || null
-      };
-    });
-    setTaskStatusMap(initialMap);
-    setEditedTasks(tasks);
+      const initialMap = {};
+      const tasks = (aiResults?.actionItems || []).map((t, idx) => {
+        initialMap[idx] = 'approved';
+        return {
+          ...t,
+          assignee: t.assignee || '-',
+          dueDate: t.dueDate || t.due_date || null,
+          due_date: t.dueDate || t.due_date || null
+        };
+      });
+      setTaskStatusMap(initialMap);
+      setEditedTasks(tasks);
 
-    setStatus('results');
+      setStatus('results');
+    } catch (err) {
+      console.error('AI processing error in voice meeting:', err);
+      alert('Error analyzing voice transcript: ' + (err.message || 'Please check backend server connection.'));
+      setStatus('idle');
+    }
   };
 
   const downloadTranscript = () => {
@@ -249,6 +256,24 @@ export default function VoiceMeeting() {
     const idx = assignModalTaskIdx;
     const updated = [...editedTasks];
     const item = updated[idx];
+
+    const cleanAssignee = assignModalName.trim();
+    if (!cleanAssignee) {
+      alert('Please enter a valid assignee name.');
+      return;
+    }
+
+    if (assignModalDueDate.trim()) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const chosenDate = new Date(assignModalDueDate);
+      chosenDate.setHours(0, 0, 0, 0);
+      if (chosenDate < today) {
+        alert('Deadline date cannot be in the past. Please select today or a future date.');
+        return;
+      }
+    }
+
     const finalDueDate = assignModalDueDate.trim() ? assignModalDueDate.trim() : 'No Deadline';
 
     updated[idx] = {
@@ -319,6 +344,7 @@ export default function VoiceMeeting() {
       source: 'voice',
       duration: formatTime(seconds),
       transcript,
+      participants: participants || currentUserName,
       summary: results.summary,
       executive_summary: results.executive_summary,
       detailed_summary: results.detailed_summary,
@@ -329,6 +355,18 @@ export default function VoiceMeeting() {
     const saved = await saveMeeting(meeting);
     clearVoiceDraft();
     navigate(`/meetings/${saved.id || 1}`);
+  };
+
+  const handleReset = () => {
+    clearVoiceDraft();
+    setStatus('idle');
+    setTranscript('');
+    setResults(null);
+    setSeconds(0);
+    setTitle('');
+    setParticipants('');
+    setTaskStatusMap({});
+    setEditedTasks([]);
   };
 
   // ============ IDLE STATE ============
@@ -346,7 +384,15 @@ export default function VoiceMeeting() {
           <div style={{ maxWidth: 400, margin: '0 auto', textAlign: 'left' }}>
             <div className="form-group">
               <label className="form-label">Meeting Title *</label>
-              <input type="text" className="form-input" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Weekly Standup" />
+              <input 
+                type="text" 
+                className="form-input" 
+                value={title} 
+                onChange={e => setTitle(e.target.value)} 
+                placeholder="e.g. Weekly Standup" 
+                maxLength={150}
+                required 
+              />
             </div>
             <div className="form-group">
               <label className="form-label">Participants (optional)</label>
@@ -450,19 +496,19 @@ export default function VoiceMeeting() {
 
         <div className="card">
           <h3 style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>Executive Summary</h3>
-          <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '0.5rem', border: '1px solid var(--border)', lineHeight: 1.6, whiteSpace: 'pre-line' }}>{results.executive_summary}</div>
+          <StructuredSummary text={results.executive_summary || results.summary || ''} />
         </div>
 
         <div className="grid-2">
           <div className="card">
             <h3 style={{ color: 'var(--primary)', marginBottom: '0.75rem' }}>Key Decisions</h3>
             <ul style={{ listStyleType: 'disc', paddingLeft: '1.25rem' }}>
-              {results.decisions.map((d, i) => <li key={i} style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>{d}</li>)}
+              {(results.decisions || []).map((d, i) => <li key={i} style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>{d}</li>)}
             </ul>
           </div>
           <div className="card">
             <h3 style={{ color: 'var(--primary)', marginBottom: '0.75rem' }}>Risks & Concerns</h3>
-            {results.risks.map((r, i) => (
+            {(results.risks || []).map((r, i) => (
               <div key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                 <span className={`badge badge-${r.severity === 'High' ? 'danger' : 'warning'}`}>{r.severity}</span>
                 <span style={{ fontSize: '0.875rem' }}>{r.text}</span>
@@ -724,6 +770,7 @@ export default function VoiceMeeting() {
                       type="date"
                       className="form-input"
                       value={assignModalDueDate}
+                      min={new Date().toISOString().split('T')[0]}
                       onChange={(e) => setAssignModalDueDate(e.target.value)}
                       style={{ width: '100%', paddingLeft: '2.25rem' }}
                     />
@@ -774,5 +821,10 @@ export default function VoiceMeeting() {
     );
   }
 
-  return null;
+  return (
+    <div style={{ padding: '3rem', textAlign: 'center' }}>
+      <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>No meeting in progress or draft results found.</p>
+      <button className="btn btn-primary" onClick={handleReset}>Back to Voice Meeting</button>
+    </div>
+  );
 }
